@@ -23,6 +23,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -61,7 +62,7 @@ public class GenerateDdlMojo extends AbstractMojo {
     private String[] dialects;
 
     /**
-     * The Mojos execute method. 
+     * The Mojos execute method.
      *
      * @throws MojoExecutionException
      * @throws MojoFailureException
@@ -70,40 +71,69 @@ public class GenerateDdlMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         final File outputDir = outputDirectory;
 
-        //Check if the output directory exists.         
-        if (!outputDir.exists()) {
-            outputDir.mkdirs();
-        }
-
         getLog().info(String.format("Generating DDL SQL files in %s.",
                                     outputDir.getAbsolutePath()));
 
+        //Check if the output directory exists.
+        if (!outputDir.exists()) {
+            final boolean result = outputDir.mkdirs();
+            if (!result) {
+                throw new MojoFailureException(
+                    "Failed to create output directory for SQL DDL files.");
+            }
+        }
+
         //Read the dialects from the parameter and convert them to instances of the dialect enum.
         final Set<Dialect> dialectsList = new HashSet<>();
-        for (String dialect : dialects) {
+        for (final String dialect : dialects) {
             convertDialect(dialect, dialectsList);
         }
 
         //Find the entity classes in the packages.
         final Set<Class<?>> entityClasses = new HashSet<>();
-        for (String packageName : packages) {
+        for (final String packageName : packages) {
             findEntitiesForPackage(packageName, entityClasses);
         }
 
         //Generate the SQL scripts
-        for (Dialect dialect : dialectsList) {
+        for (final Dialect dialect : dialectsList) {
             generateDdl(dialect, entityClasses);
         }
+    }
+
+    public File getOutputDirectory() {
+        return outputDirectory;
+    }
+
+    public void setOutputDirectory(final File outputDirectory) {
+        this.outputDirectory = outputDirectory;
+    }
+
+    public String[] getPackages() {
+        return Arrays.copyOf(packages, packages.length);
+    }
+
+    public void setPackages(final String[] packages) {
+        this.packages = Arrays.copyOf(packages, packages.length);
+    }
+
+    public String[] getDialects() {
+        return Arrays.copyOf(dialects, dialects.length);
+    }
+
+    public void setDialects(final String[] dialects) {
+        this.dialects = Arrays.copyOf(dialects, dialects.length);
     }
 
     /**
      * Helper method for converting the dialects from {@code String} to instances of the
      * {@link Dialect} enumeration.
-     * 
-     * @param dialect The dialect to convert.
+     *
+     * @param dialect      The dialect to convert.
      * @param dialectsList The lists of dialects where the converted dialect is stored.
-     * @throws MojoFailureException If the dialect string could not be converted, for example
-     * if it is misspelled. This will cause a {@code Build Failure}
+     *
+     * @throws MojoFailureException If the dialect string could not be converted, for example if it
+     *                              is misspelled. This will cause a {@code Build Failure}
      */
     private void convertDialect(final String dialect, final Set<Dialect> dialectsList)
         throws MojoFailureException {
@@ -112,19 +142,17 @@ public class GenerateDdlMojo extends AbstractMojo {
             dialectsList.add(Dialect.valueOf(dialect.toUpperCase(Locale.ENGLISH)));
         } catch (IllegalArgumentException ex) {
             final StringBuffer buffer = new StringBuffer();
-            for (Dialect avilable : Dialect.values()) {
+            for (final Dialect avilable : Dialect.values()) {
                 buffer.append(avilable.toString()).append('\n');
             }
 
             throw new MojoFailureException(
-                ex,
-                String.format("Can't convert the configured dialect %s to a dialect classname.",
-                              dialect),
-                String.format("Can't convert the configured dialect %s to a dialect classname. "
-                                  + "Available dialects are:\n"
+                String.format("Can't convert the configured dialect '%s' to a dialect classname. "
+                                  + "Available dialects are:%n"
                                   + "%s",
                               dialect,
-                              buffer.toString()));
+                              buffer.toString()),
+                ex);
         }
     }
 
@@ -132,44 +160,44 @@ public class GenerateDdlMojo extends AbstractMojo {
      * Helper method for finding a entity classes in a package. The entity classes must be annotated
      * with the {@link Entity} annotation. The method uses the Reflections library for finding the
      * entity classes.
-     * 
+     *
      * @param packageName
-     * @param entityClasses 
+     * @param entityClasses
      */
     private void findEntitiesForPackage(final String packageName,
                                         final Set<Class<?>> entityClasses) {
         final Reflections reflections = new Reflections(ClasspathHelper.forPackage(packageName));
 
         final Set<Class<?>> classesWithEntity = reflections.getTypesAnnotatedWith(Entity.class);
-        for (Class<?> entityClass : classesWithEntity) {
+        for (final Class<?> entityClass : classesWithEntity) {
             entityClasses.add(entityClass);
         }
-        
-        final Set<Class<?>> classesWithEmbeddable = reflections.getTypesAnnotatedWith(Embeddable.class);
-        for(Class<?> entityClass : classesWithEmbeddable) {
+
+        final Set<Class<?>> embeddedables = reflections.getTypesAnnotatedWith(Embeddable.class);
+        for (final Class<?> entityClass : embeddedables) {
             entityClasses.add(entityClass);
         }
     }
 
     /**
-     * Helper method for generating the DDL classes for a specific dialect. This is place for
-     * the real work is done. The method first creates an instance of the {@link Configuration} 
-     * class from Hibernate an puts the appropriate values into it. It then creates an instance
-     * of the {@link SchemaExport} class from the Hibernate API, configured this class, for example
-     * by setting {@code format} to {@code true} so that the generated SQL files are formatted 
-     * nicely. After that it calls the 
-     * {@link SchemaExport#execute(boolean, boolean, boolean, boolean)} method which will create
-     * the SQL script file. The method is called in a way which requires no database connection.
-     * 
-     * 
+     * Helper method for generating the DDL classes for a specific dialect. This is place for the
+     * real work is done. The method first creates an instance of the {@link Configuration} class
+     * from Hibernate an puts the appropriate values into it. It then creates an instance of the
+     * {@link SchemaExport} class from the Hibernate API, configured this class, for example by
+     * setting {@code format} to {@code true} so that the generated SQL files are formatted nicely.
+     * After that it calls the {@link SchemaExport#execute(boolean, boolean, boolean, boolean)}
+     * method which will create the SQL script file. The method is called in a way which requires no
+     * database connection.
+     *
+     *
      * @param dialect
-     * @param entityClasses 
+     * @param entityClasses
      */
     private void generateDdl(final Dialect dialect, final Set<Class<?>> entityClasses) {
         final Configuration configuration = new Configuration();
         configuration.setProperty("hibernate.hbm2ddl.auto", "create");
 
-        for (Class<?> entityClass : entityClasses) {
+        for (final Class<?> entityClass : entityClasses) {
             configuration.addAnnotatedClass(entityClass);
         }
 
