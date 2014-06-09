@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import org.apache.maven.plugin.MojoFailureException;
 import org.hibernate.cfg.Configuration;
@@ -139,8 +140,13 @@ public class GenerateDdlMojo extends AbstractMojo {
                                         final Set<Class<?>> entityClasses) {
         final Reflections reflections = new Reflections(ClasspathHelper.forPackage(packageName));
 
-        Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Entity.class);
-        for (Class<?> entityClass : classes) {
+        final Set<Class<?>> classesWithEntity = reflections.getTypesAnnotatedWith(Entity.class);
+        for (Class<?> entityClass : classesWithEntity) {
+            entityClasses.add(entityClass);
+        }
+        
+        final Set<Class<?>> classesWithEmbeddable = reflections.getTypesAnnotatedWith(Embeddable.class);
+        for(Class<?> entityClass : classesWithEmbeddable) {
             entityClasses.add(entityClass);
         }
     }
