@@ -113,6 +113,12 @@
                             <goal>helpmojo</goal>
                         </goals>
                     </execution>
+		    <execution>
+		    	<id>site</id>
+			<goals>
+			    <goal>report</goal>
+			</goals>
+		    </execution>
                 </executions>
             </plugin>
             <plugin>
