@@ -59,6 +59,16 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
             <version>3.2.1</version>
         </dependency>
@@ -67,6 +77,11 @@
             <artifactId>maven-plugin-annotations</artifactId>
             <version>3.3</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-project</artifactId>
+            <version>3.0-alpha-2</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
@@ -113,12 +128,6 @@
                             <goal>helpmojo</goal>
                         </goals>
                     </execution>
-		    <execution>
-		    	<id>site</id>
-			<goals>
-			    <goal>report</goal>
-			</goals>
-		    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -141,33 +150,33 @@
             
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-pmd-plugin</artifactId>
-                            <version>3.1</version>
-                            <configuration>
-                                <linkXref>true</linkXref>
-                                <sourceEncoding>utf-8</sourceEncoding>
-                                <targetJdk>1.7</targetJdk>
-                                <rulesets>
-                                    <ruleset>/rulesets/java/basic.xml</ruleset>
-                                    <ruleset>/rulesets/java/braces.xml</ruleset>
-                                    <ruleset>/rulesets/java/clone.xml</ruleset>
-                                    <ruleset>/rulesets/java/codesize.xml</ruleset>
-                                    <ruleset>/rulesets/java/design.xml</ruleset>
-                                    <ruleset>/rulesets/java/empty.xml</ruleset>
-                                    <ruleset>/rulesets/java/finalizers.xml</ruleset>
-                                    <ruleset>/rulesets/java/imports.xml</ruleset>
-                                    <ruleset>/rulesets/java/javabeans.xml</ruleset>
-                                    <ruleset>/rulesets/java/junit.xml</ruleset>
-                                    <ruleset>/rulesets/java/naming.xml</ruleset>
-                                    <ruleset>/rulesets/java/optimizations.xml</ruleset>
-                                    <ruleset>/rulesets/java/strictexception.xml</ruleset>
-                                    <ruleset>/rulesets/java/strings.xml</ruleset>
-                                    <ruleset>/rulesets/java/sunsecure.xml</ruleset>
-                                    <ruleset>/rulesets/java/typeresolution.xml</ruleset>
-                                    <ruleset>/rulesets/java/unnecessary.xml</ruleset>
-                                    <ruleset>/rulesets/java/unusedcode.xml</ruleset>
-                                </rulesets>
-                            </configuration>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <linkXref>true</linkXref>
+                    <sourceEncoding>utf-8</sourceEncoding>
+                    <targetJdk>1.7</targetJdk>
+                    <rulesets>
+                        <ruleset>/rulesets/java/basic.xml</ruleset>
+                        <ruleset>/rulesets/java/braces.xml</ruleset>
+                        <ruleset>/rulesets/java/clone.xml</ruleset>
+                        <ruleset>/rulesets/java/codesize.xml</ruleset>
+                        <ruleset>/rulesets/java/design.xml</ruleset>
+                        <ruleset>/rulesets/java/empty.xml</ruleset>
+                        <ruleset>/rulesets/java/finalizers.xml</ruleset>
+                        <ruleset>/rulesets/java/imports.xml</ruleset>
+                        <ruleset>/rulesets/java/javabeans.xml</ruleset>
+                        <ruleset>/rulesets/java/junit.xml</ruleset>
+                        <ruleset>/rulesets/java/naming.xml</ruleset>
+                        <ruleset>/rulesets/java/optimizations.xml</ruleset>
+                        <ruleset>/rulesets/java/strictexception.xml</ruleset>
+                        <ruleset>/rulesets/java/strings.xml</ruleset>
+                        <ruleset>/rulesets/java/sunsecure.xml</ruleset>
+                        <ruleset>/rulesets/java/typeresolution.xml</ruleset>
+                        <ruleset>/rulesets/java/unnecessary.xml</ruleset>
+                        <ruleset>/rulesets/java/unusedcode.xml</ruleset>
+                    </rulesets>
+                </configuration>
             </plugin>
             
             <plugin>
@@ -175,7 +184,8 @@
                 <artifactId>maven-site-plugin</artifactId>
                 <version>3.3</version>
                 <configuration>
-                    <reportPlugins>
+                    <!--<reportPlugins>
+                      
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-javadoc-plugin</artifactId>
@@ -260,12 +270,108 @@
                                 </reportSet>
                             </reportSets>
                         </plugin>
-                    </reportPlugins>
+                    </reportPlugins>-->
                 </configuration>
             </plugin>
         </plugins>
     </build>
-        
+    
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                    <links>
+                        <link>http://docs.oracle.com/javase/7/docs/api/</link>
+                        <link>http://docs.jboss.org/hibernate/orm/4.3/javadocs/</link>
+                    </links>
+                    <show>private</show>
+                    <docfilessubdirs>true</docfilessubdirs>
+                    <charset>UTF-8</charset>
+                    <encoding>UTF-8</encoding>
+                    <docencoding>UTF-8</docencoding>
+                    <breakiterator>true</breakiterator>
+                    <version>true</version>
+                    <author>true</author>
+                    <keywords>true</keywords>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>                       
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.17</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.6</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.5.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <linkXref>true</linkXref>
+                    <sourceEncoding>utf-8</sourceEncoding>
+                    <targetJdk>1.7</targetJdk>
+                    <rulesets>
+                        <ruleset>/rulesets/java/basic.xml</ruleset>
+                        <ruleset>/rulesets/java/braces.xml</ruleset>
+                        <ruleset>/rulesets/java/clone.xml</ruleset>
+                        <ruleset>/rulesets/java/codesize.xml</ruleset>
+                        <ruleset>/rulesets/java/design.xml</ruleset>
+                        <ruleset>/rulesets/java/empty.xml</ruleset>
+                        <ruleset>/rulesets/java/finalizers.xml</ruleset>
+                        <ruleset>/rulesets/java/imports.xml</ruleset>
+                        <ruleset>/rulesets/java/javabeans.xml</ruleset>
+                        <ruleset>/rulesets/java/junit.xml</ruleset>
+                        <ruleset>/rulesets/java/naming.xml</ruleset>
+                        <ruleset>/rulesets/java/optimizations.xml</ruleset>
+                        <ruleset>/rulesets/java/strictexception.xml</ruleset>
+                        <ruleset>/rulesets/java/strings.xml</ruleset>
+                        <ruleset>/rulesets/java/sunsecure.xml</ruleset>
+                        <ruleset>/rulesets/java/typeresolution.xml</ruleset>
+                        <ruleset>/rulesets/java/unnecessary.xml</ruleset>
+                        <ruleset>/rulesets/java/unusedcode.xml</ruleset>
+                    </rulesets>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.7</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>dependencies</report>
+                            <report>scm</report>
+                            <report>license</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+        </plugins>
+    </reporting>
+    
+    
     <profiles>
         <profile>
             <id>run-its</id>

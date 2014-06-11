@@ -23,13 +23,23 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.reflections.Reflections;
@@ -39,7 +49,10 @@ import org.reflections.util.ClasspathHelper;
  * Goal which creates DDL SQL files for the JPA entities in the project (using the Hibernate 4
  * SchemaExport class}.
  */
-@Mojo(name = "gen-ddl", defaultPhase = LifecyclePhase.PROCESS_SOURCES)
+@Mojo(name = "gen-ddl",
+      defaultPhase = LifecyclePhase.PREPARE_PACKAGE,
+      requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
+      threadSafe = true)
 public class GenerateDdlMojo extends AbstractMojo {
 
     /**
@@ -60,6 +73,10 @@ public class GenerateDdlMojo extends AbstractMojo {
      */
     @Parameter(required = true)
     private String[] dialects;
+
+    //@Parameter(defaultValue = "${project}", required = true, readonly = true)
+    @Component
+    private MavenProject project;
 
     /**
      * The Mojos execute method.
@@ -94,6 +111,7 @@ public class GenerateDdlMojo extends AbstractMojo {
         for (final String packageName : packages) {
             findEntitiesForPackage(packageName, entityClasses);
         }
+        getLog().info(String.format("Found %d entities.", entityClasses.size()));
 
         //Generate the SQL scripts
         for (final Dialect dialect : dialectsList) {
@@ -165,18 +183,68 @@ public class GenerateDdlMojo extends AbstractMojo {
      * @param entityClasses
      */
     private void findEntitiesForPackage(final String packageName,
-                                        final Set<Class<?>> entityClasses) {
-        final Reflections reflections = new Reflections(ClasspathHelper.forPackage(packageName));
+                                        final Set<Class<?>> entityClasses)
+        throws MojoFailureException {
 
+        final Reflections reflections = createReflections(packageName);
         final Set<Class<?>> classesWithEntity = reflections.getTypesAnnotatedWith(Entity.class);
         for (final Class<?> entityClass : classesWithEntity) {
             entityClasses.add(entityClass);
         }
 
-        final Set<Class<?>> embeddedables = reflections.getTypesAnnotatedWith(Embeddable.class);
-        for (final Class<?> entityClass : embeddedables) {
-            entityClasses.add(entityClass);
+//        final Set<Class<?>> embeddedables = reflections.getTypesAnnotatedWith(Embeddable.class);
+//        for (final Class<?> entityClass : embeddedables) {
+//            entityClasses.add(entityClass);
+//        }
+    }
+
+    private Reflections createReflections(final String packageName) throws MojoFailureException {
+        if (project == null) {
+            return new Reflections(ClasspathHelper.forPackage(packageName));
+        } else {
+//            final List<String> sourceRoots = project.getCompileSourceRoots();
+            final List<String> classPathElems;
+            try {
+                classPathElems = project.getCompileClasspathElements();
+            } catch (DependencyResolutionRequiredException ex) {
+                throw new MojoFailureException("Failed to resolve project classpath.", ex);
+            }
+            final List<URL> classPathUrls = new ArrayList<>();
+//            for (String sourceRoot : sourceRoots) {
+//                getLog().info(String.format("Adding source root '%s'...", sourceRoot));
+//                classPathUrls.add(classPathElemToUrl(sourceRoot));
+//            }
+            for (String classPathElem : classPathElems) {
+                getLog().info(String.format("Adding classpath elemement '%s'...", classPathElem));
+                classPathUrls.add(classPathElemToUrl(classPathElem));
+            }
+
+            getLog().info("Classpath URLs:");
+            for (URL url : classPathUrls) {
+                getLog().info(String.format("\t%s", url.toString()));
+            }
+
+            final URLClassLoader classLoader = new URLClassLoader(
+                classPathUrls.toArray(new URL[0]),
+                Thread.currentThread().getContextClassLoader());
+
+            return new Reflections(ClasspathHelper.forPackage(packageName, classLoader));
         }
+    }
+
+    private URL classPathElemToUrl(final String classPathElem) throws MojoFailureException {
+        final File file = new File(classPathElem);
+        final URL url;
+        try {
+            url = file.toURI().toURL();
+        } catch (MalformedURLException ex) {
+            throw new MojoFailureException(
+                String.format("Failed to convert classpath element '%s' to an URL.",
+                              classPathElem),
+                ex);
+        }
+
+        return url;
     }
 
     /**
