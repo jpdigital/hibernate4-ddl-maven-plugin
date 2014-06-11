@@ -227,6 +227,7 @@ public class GenerateDdlMojo extends AbstractMojo {
             final URLClassLoader classLoader = new URLClassLoader(
                 classPathUrls.toArray(new URL[0]),
                 Thread.currentThread().getContextClassLoader());
+            Thread.currentThread().setContextClassLoader(classLoader);
 
             return new Reflections(ClasspathHelper.forPackage(packageName, classLoader));
         }
