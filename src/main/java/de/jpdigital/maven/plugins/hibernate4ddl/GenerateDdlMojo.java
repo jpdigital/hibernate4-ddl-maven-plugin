@@ -32,9 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -50,7 +48,7 @@ import org.reflections.util.ClasspathHelper;
  * SchemaExport class}.
  */
 @Mojo(name = "gen-ddl",
-      defaultPhase = LifecyclePhase.PREPARE_PACKAGE,
+      defaultPhase = LifecyclePhase.PROCESS_CLASSES,
       requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
       threadSafe = true)
 public class GenerateDdlMojo extends AbstractMojo {

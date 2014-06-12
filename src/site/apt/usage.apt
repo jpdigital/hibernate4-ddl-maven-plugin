@@ -4,3 +4,45 @@
     Jens Pelzetter
     -----------------------------------
     2014-05-29
+
+Usage
+
+    To use the plugin add it the the build pluings in your POM:
+
++--
+<build>
+...
+    <plugin>
+        <groupId>de.jpdigital</groupId>
+        <artifactId>hibernate4-ddl-maven-plugin</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <configuration>
+            <dialects>
+                <param>postgresql9</param>
+            </dialects>
+            <packages>
+                <param>org.example.entities</param>
+            </packages>
+        </configuration>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>gen-ddl</goal>
+                </goals>
+                <phase>process-classes</phase>
+            </execution>
+        </executions>
+    </plugin>
+...
+</build>
++--
+
+    The plugin has two mandatory configuration parameters. The first on are the dialects for which
+    DDL scripts will be generated. For a list of supported dialects refer to the JavaDoc of the 
+    {{{Dialect}apidocs/index.html?de/jpdigital/maven/plugins/hibernate4ddl/Dialect.html}} 
+    enumeration.
+
+    The second parameter are the packages which contain the entity classes.
+
+    For now you have also the add the author's repository to your Maven repositories, either in
+    your settings file or the the POM of your project:
