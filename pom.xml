@@ -4,16 +4,40 @@
 
     <groupId>de.jpdigital</groupId>
     <artifactId>hibernate4-ddl-maven-plugin</artifactId>
-    <version>1.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven DDL generator plugin for Hibernate 4</name>
 
     <url>http://www.jp-digital.de/projects/hibernate4-ddl-maven-plugin</url>
+    
     <issueManagement>
         <system>Redmine</system>
         <url>http://www.jp-digital.de/projects/hibernate4-ddl-maven-plugin</url>
     </issueManagement>
+    
+    <distributionManagement>
+        <snapshotRepository>
+            <id>jp-digital-snapshots</id>
+            <url>http://archiva.jp-digital.de/repository/jp-digital-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </snapshotRepository>
+        <repository>
+            <id>jp-digital-releases</id>            
+            <url>http://archiva.jp-digital.de/repository/jp-digital-releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </distributionManagement>
     
     <prerequisites>
         <maven>3.0.0</maven>
