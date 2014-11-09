@@ -44,5 +44,12 @@ Usage
 
     The second parameter are the packages which contain the entity classes.
 
+    If you use Envers in your project you have to add a third parameter to create the additional 
+    tables required by Envers:
+
++--
+<useEnvers>true</useEnvers>
++--
+
     For now you have also the add the author's repository to your Maven repositories, either in
     your settings file or the the POM of your project:

@@ -98,8 +98,59 @@ public class DdlMojoTest {
                                          + "persons entity",
                                      dialect.toLowerCase(Locale.ENGLISH)),
                        fileContainsCompanyEntity(path));
-        }
 
+            assertTrue(String.format("DDL file '%s' does not contains 'create table' statement for "
+                                         + "reports entity", dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsReportEntity(path));
+        }
+    }
+
+    @Test
+    public void generateDdl4Envers() throws MojoExecutionException,
+                                            MojoFailureException,
+                                            IOException {
+        mojo.setOutputDirectory(new File(TEST_DIR));
+
+        final String[] packages = new String[]{
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
+        };
+        mojo.setPackages(packages);
+
+        final String[] dialects = new String[]{
+            "hsql",
+            "mysql5",
+            "POSTGRESQL9"
+        };
+        mojo.setDialects(dialects);
+
+        mojo.setUseEnvers(true);
+
+        mojo.execute();
+
+        for (String dialect : dialects) {
+            final String path = String.format("%s/%s.sql",
+                                              TEST_DIR,
+                                              dialect.toLowerCase(Locale.ENGLISH));
+            assertTrue(String.format("DDL file '%s' was not generated.", path), fileExists(path));
+
+            assertTrue(String.format("DDL file '%s' does not contain 'create table' statement for"
+                                         + "persons entity",
+                                     dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsPersonEntity(path));
+            assertTrue(String.format("DDL file '%s' does not contain 'create table' statement for"
+                                         + "persons entity",
+                                     dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsCompanyEntity(path));
+
+            assertTrue(String.format("DDL file '%s' does not contains 'create table' statement for "
+                                         + "reports entity", dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsReportEntity(path));
+            assertTrue(String.format("DDL file '%s' does not contains 'create table' statement for "
+                                         + "reports envers table",
+                                     dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsReportsEnversTable(path));
+        }
     }
 
     @Test(expected = MojoFailureException.class)
@@ -137,7 +188,7 @@ public class DdlMojoTest {
             "POSTGRESQL9"
         };
         mojo.setDialects(dialects);
-        
+
         final File outputDirectory = mojo.getOutputDirectory();
         final String path = outputDirectory.getAbsolutePath();
 
@@ -164,7 +215,7 @@ public class DdlMojoTest {
             "POSTGRESQL9"
         };
         mojo.setDialects(dialects);
-        
+
         final String[] retrievedPackages = mojo.getPackages();
 
         assertTrue(String.format("Expected an array containing two packages names but found an "
@@ -173,7 +224,8 @@ public class DdlMojoTest {
                    retrievedPackages.length == 2);
 
         assertEquals(retrievedPackages[0], "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities");
-        assertEquals(retrievedPackages[1], "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2");
+        assertEquals(retrievedPackages[1],
+                     "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2");
     }
 
     @Test
@@ -192,18 +244,18 @@ public class DdlMojoTest {
             "POSTGRESQL9"
         };
         mojo.setDialects(dialects);
-        
+
         final String[] retrievedDialects = mojo.getDialects();
 
         assertTrue(String.format("Expected an array containing three dialects but found an array "
-            + "containing %d dialects.",
+                                     + "containing %d dialects.",
                                  retrievedDialects.length),
                    retrievedDialects.length == 3);
-        
+
         assertEquals(retrievedDialects[0], "hsql");
         assertEquals(retrievedDialects[1], "mysql5");
         assertEquals(retrievedDialects[2], "POSTGRESQL9");
-        
+
     }
 
     private boolean fileExists(final String path) {
@@ -218,13 +270,25 @@ public class DdlMojoTest {
         return sql.toLowerCase(Locale.ENGLISH).contains("create table persons");
     }
 
+    private boolean fileContainsReportEntity(final String path) throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        final String sql = new String(encoded, StandardCharsets.UTF_8);
+
+        return sql.toLowerCase(Locale.ENGLISH).contains("create table reports");
+    }
+
+    private boolean fileContainsReportsEnversTable(final String path) throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        final String sql = new String(encoded, StandardCharsets.UTF_8);
+
+        return sql.toLowerCase(Locale.ENGLISH).contains("create table reports_revisions");
+    }
+
     private boolean fileContainsCompanyEntity(final String path) throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(path));
         final String sql = new String(encoded, StandardCharsets.UTF_8);
 
         return sql.toLowerCase(Locale.ENGLISH).contains("create table companies");
     }
-    
-   
 
 }

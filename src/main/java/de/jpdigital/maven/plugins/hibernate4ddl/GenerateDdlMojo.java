@@ -40,6 +40,7 @@ import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.envers.tools.hbm2ddl.EnversSchemaGenerator;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
@@ -72,8 +73,15 @@ public class GenerateDdlMojo extends AbstractMojo {
      */
     @Parameter(required = true)
     private String[] dialects;
+    
+    /**
+     * Set this to <code>true</code> if you use the Envers feature of Hibernate. 
+     * When set to <code>true</code> the {@code SchemaExport} implementation for Envers is used. 
+     * This is necessary to create the additional tables required by Envers.
+     */
+    @Parameter(required = false)
+    private boolean useEnvers;
 
-    //@Parameter(defaultValue = "${project}", required = true, readonly = true)
     @Component
     private transient MavenProject project;
 
@@ -140,6 +148,14 @@ public class GenerateDdlMojo extends AbstractMojo {
 
     public void setDialects(final String[] dialects) {
         this.dialects = Arrays.copyOf(dialects, dialects.length);
+    }
+    
+    public boolean isUseEnvers() {
+        return useEnvers;
+    }
+    
+    public void setUseEnvers(final boolean useEnvers) {
+        this.useEnvers = useEnvers;
     }
 
     /**
@@ -280,7 +296,13 @@ public class GenerateDdlMojo extends AbstractMojo {
 
         configuration.setProperty("hibernate.dialect", dialect.getDialectClass());
 
-        final SchemaExport export = new SchemaExport(configuration);
+        final SchemaExport export;
+        if (useEnvers) {
+            export = new EnversSchemaGenerator(configuration).export();
+        } else {
+            export = new SchemaExport(configuration);
+            
+        }
         export.setDelimiter(";");
 
         final String dirPath;
