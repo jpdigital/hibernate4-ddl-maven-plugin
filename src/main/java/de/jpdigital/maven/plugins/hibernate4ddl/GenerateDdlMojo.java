@@ -24,6 +24,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -34,6 +38,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.persistence.Entity;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -44,6 +51,9 @@ import org.hibernate.envers.tools.hbm2ddl.EnversSchemaGenerator;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Goal which creates DDL SQL files for the JPA entities in the project (using the Hibernate 4
@@ -73,14 +83,17 @@ public class GenerateDdlMojo extends AbstractMojo {
      */
     @Parameter(required = true)
     private String[] dialects;
-    
+
     /**
-     * Set this to <code>true</code> if you use the Envers feature of Hibernate. 
-     * When set to <code>true</code> the {@code SchemaExport} implementation for Envers is used. 
-     * This is necessary to create the additional tables required by Envers.
+     * Set this to <code>true</code> if you use the Envers feature of Hibernate. When set to
+     * <code>true</code> the {@code SchemaExport} implementation for Envers is used. This is
+     * necessary to create the additional tables required by Envers.
      */
     @Parameter(required = false)
     private boolean useEnvers;
+
+    @Parameter(defaultValue = "${basedir}/src/main/resources/META-INF/persistence.xml")
+    private File persistenceXml;
 
     @Component
     private transient MavenProject project;
@@ -149,13 +162,21 @@ public class GenerateDdlMojo extends AbstractMojo {
     public void setDialects(final String[] dialects) {
         this.dialects = Arrays.copyOf(dialects, dialects.length);
     }
-    
+
     public boolean isUseEnvers() {
         return useEnvers;
     }
-    
+
     public void setUseEnvers(final boolean useEnvers) {
         this.useEnvers = useEnvers;
+    }
+
+    public File getPersistenceXml() {
+        return persistenceXml;
+    }
+
+    public void setPersistenceXml(final File persistenceXml) {
+        this.persistenceXml = persistenceXml;
     }
 
     /**
@@ -209,11 +230,13 @@ public class GenerateDdlMojo extends AbstractMojo {
     }
 
     /**
-     * Helper method for creating the {@link Reflections} instance used by the other methods for
-     * a specific package. Also does some class loader magic.
-     * 
+     * Helper method for creating the {@link Reflections} instance used by the other methods for a
+     * specific package. Also does some class loader magic.
+     *
      * @param packageName Fully qualified name of the package.
+     *
      * @return A reflections instance for the provided package.
+     *
      * @throws MojoFailureException If something goes wrong.
      */
     private Reflections createReflections(final String packageName) throws MojoFailureException {
@@ -250,11 +273,13 @@ public class GenerateDdlMojo extends AbstractMojo {
     }
 
     /**
-     * Helper method for converting a fully qualified package name from the string representation 
-     * to a a URL.
-     * 
+     * Helper method for converting a fully qualified package name from the string representation to
+     * a a URL.
+     *
      * @param classPathElem The class path to convert.
+     *
      * @return A URL for the package.
+     *
      * @throws MojoFailureException If something goes wrong.
      */
     private URL classPathElemToUrl(final String classPathElem) throws MojoFailureException {
@@ -288,6 +313,9 @@ public class GenerateDdlMojo extends AbstractMojo {
      */
     private void generateDdl(final Dialect dialect, final Set<Class<?>> entityClasses) {
         final Configuration configuration = new Configuration();
+
+        processPersistenceXml(configuration);
+
         configuration.setProperty("hibernate.hbm2ddl.auto", "create");
 
         for (final Class<?> entityClass : entityClasses) {
@@ -301,7 +329,7 @@ public class GenerateDdlMojo extends AbstractMojo {
             export = new EnversSchemaGenerator(configuration).export();
         } else {
             export = new SchemaExport(configuration);
-            
+
         }
         export.setDelimiter(";");
 
@@ -318,6 +346,67 @@ public class GenerateDdlMojo extends AbstractMojo {
                                            dialect.name().toLowerCase(Locale.ENGLISH)));
         export.setFormat(true);
         export.execute(true, false, false, false);
+    }
+
+    private void processPersistenceXml(final Configuration configuration) {
+        if (persistenceXml != null) {
+            getLog().info("persistence.xml available, locking for properties...");
+
+            final InputStream inStream;
+            try {
+                 inStream = new FileInputStream(persistenceXml);
+            } catch (FileNotFoundException ex) {
+                getLog().error("Failed to open persistence.xml. Not processing properties.", ex);
+                return;
+            }
+            
+            final SAXParser parser;
+            try {
+                parser = SAXParserFactory.newInstance().newSAXParser();
+            } catch (ParserConfigurationException | SAXException ex) {
+                getLog().error("Error creating XML Parser. Not processing properties.", ex);
+                return;
+            }
+            
+            try {
+                parser.parse(inStream, new PersistenceXmlHandler(configuration));
+            } catch (SAXException | IOException ex) {
+                getLog().error("Error parsing persistence.xml.", ex);
+            }
+        }
+    }
+    
+    private class PersistenceXmlHandler extends DefaultHandler {
+        
+        private final transient Configuration configuration;
+        
+        public PersistenceXmlHandler(final Configuration configuration) {
+            this.configuration = configuration;
+        }
+        
+        @Override
+        public void startElement(final String uri, 
+                                 final String localName, 
+                                 final String qName, 
+                                 final Attributes attributes) {
+            getLog().info(String.format("Found element with uri = '%s', localName = '%s', qName = '%s'...",
+                          uri,
+                          localName,
+                          qName));
+            
+            if ("property".equals(qName)) {
+                final String propertyName = attributes.getValue("name");
+                final String propertyValue = attributes.getValue("value");
+                
+                if ((propertyName != null && !propertyName.isEmpty()) 
+                    && (propertyValue != null && !propertyValue.isEmpty())) {
+                    getLog().info(String.format("Found property %s = %s in persistence.xml", 
+                                                propertyName, 
+                                                propertyValue));
+                    configuration.setProperty(propertyName, propertyValue);
+                }
+            }
+        }
     }
 
 }
