@@ -25,7 +25,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -87,12 +86,19 @@ public class GenerateDdlMojo extends AbstractMojo {
     /**
      * Set this to <code>true</code> if you use the Envers feature of Hibernate. When set to
      * <code>true</code> the {@code SchemaExport} implementation for Envers is used. This is
-     * necessary to create the additional tables required by Envers.
+     * necessary to create the additional tables required by Envers. Default value is {@code false}.
      */
     @Parameter(required = false)
     private boolean useEnvers;
 
-    @Parameter(defaultValue = "${basedir}/src/main/resources/META-INF/persistence.xml")
+    /**
+     * The {@code persistence.xml} file to use to read properties etc. Default value is
+     * {@code src/main/resources/META-INF/persistence.xml}. If the file is not present it is
+     * ignored. If the file is present all properties set using a {@code <property>} element are set
+     * on the Hibernate configuration.
+     */
+    @Parameter(defaultValue = "${basedir}/src/main/resources/META-INF/persistence.xml",
+               required = false)
     private File persistenceXml;
 
     @Component
@@ -352,61 +358,53 @@ public class GenerateDdlMojo extends AbstractMojo {
         if (persistenceXml != null) {
             getLog().info("persistence.xml available, locking for properties...");
 
-            final InputStream inStream;
-            try {
-                 inStream = new FileInputStream(persistenceXml);
-            } catch (FileNotFoundException ex) {
-                getLog().error("Failed to open persistence.xml. Not processing properties.", ex);
-                return;
-            }
-            
-            final SAXParser parser;
-            try {
+            try (InputStream inStream = new FileInputStream(persistenceXml)) {
+                final SAXParser parser;
+
                 parser = SAXParserFactory.newInstance().newSAXParser();
-            } catch (ParserConfigurationException | SAXException ex) {
-                getLog().error("Error creating XML Parser. Not processing properties.", ex);
-                return;
-            }
-            
-            try {
+
                 parser.parse(inStream, new PersistenceXmlHandler(configuration));
-            } catch (SAXException | IOException ex) {
-                getLog().error("Error parsing persistence.xml.", ex);
+            } catch (IOException ex) {
+                getLog().error("Failed to open persistence.xml. Not processing properties.", ex);
+            } catch (ParserConfigurationException | SAXException ex) {
+                getLog().error("Error parsing persistence.xml. Not processing properties", ex);
             }
         }
     }
-    
+
     private class PersistenceXmlHandler extends DefaultHandler {
-        
+
         private final transient Configuration configuration;
-        
+
         public PersistenceXmlHandler(final Configuration configuration) {
             this.configuration = configuration;
         }
-        
+
         @Override
-        public void startElement(final String uri, 
-                                 final String localName, 
-                                 final String qName, 
+        public void startElement(final String uri,
+                                 final String localName,
+                                 final String qName,
                                  final Attributes attributes) {
-            getLog().info(String.format("Found element with uri = '%s', localName = '%s', qName = '%s'...",
-                          uri,
-                          localName,
-                          qName));
-            
+            getLog().info(String.format(
+                "Found element with uri = '%s', localName = '%s', qName = '%s'...",
+                uri,
+                localName,
+                qName));
+
             if ("property".equals(qName)) {
                 final String propertyName = attributes.getValue("name");
                 final String propertyValue = attributes.getValue("value");
-                
-                if ((propertyName != null && !propertyName.isEmpty()) 
-                    && (propertyValue != null && !propertyValue.isEmpty())) {
-                    getLog().info(String.format("Found property %s = %s in persistence.xml", 
-                                                propertyName, 
+
+                if (propertyName != null && !propertyName.isEmpty()
+                        && propertyValue != null && !propertyValue.isEmpty()) {
+                    getLog().info(String.format("Found property %s = %s in persistence.xml",
+                                                propertyName,
                                                 propertyValue));
                     configuration.setProperty(propertyName, propertyValue);
                 }
             }
         }
+
     }
 
 }

@@ -19,17 +19,21 @@ package de.jpdigital.maven.plugins.hibernate4ddl.tests;
 import de.jpdigital.maven.plugins.hibernate4ddl.GenerateDdlMojo;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Locale;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.hibernate.cfg.Configuration;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 /**
@@ -40,6 +44,7 @@ import static org.junit.Assert.*;
 public class DdlMojoTest {
 
     private static final String TEST_DIR = "target/test/ddl/test";
+    private static final String TEST_PERSISTENCE_XML = "src/test/resources/test-persistence.xml";
     private GenerateDdlMojo mojo;
 
     ;
@@ -151,6 +156,43 @@ public class DdlMojoTest {
                                      dialect.toLowerCase(Locale.ENGLISH)),
                        fileContainsReportsEnversTable(path));
         }
+    }
+    
+    @Test
+    public void generateDdlWithProperties() throws NoSuchMethodException, 
+                                                   IllegalAccessException, 
+                                                   IllegalArgumentException, 
+                                                   InvocationTargetException {
+        mojo.setOutputDirectory(new File(TEST_DIR));
+
+        final String[] packages = new String[]{
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
+        };
+        mojo.setPackages(packages);
+
+        final String[] dialects = new String[]{
+            "hsql",
+            "mysql5",
+            "POSTGRESQL9"
+        };
+        mojo.setDialects(dialects);
+        
+        mojo.setPersistenceXml(new File(TEST_PERSISTENCE_XML));
+        assertThat(mojo.getPersistenceXml(), is(notNullValue()));
+        
+        final Configuration configuration = new Configuration();
+        final Method processMethod = mojo.getClass().getDeclaredMethod("processPersistenceXml", 
+                                                                       Configuration.class);
+        processMethod.setAccessible(true);
+        
+        processMethod.invoke(mojo, configuration);
+        
+        assertThat(configuration.getProperty("org.hibernate.envers.audit_table_suffix"), 
+                   is(equalTo("_audit")));
+        assertThat(configuration.getProperty("org.hibernate.envers.revision_type_field_name"), 
+                   is(equalTo("rev_type")));
+        
     }
 
     @Test(expected = MojoFailureException.class)
