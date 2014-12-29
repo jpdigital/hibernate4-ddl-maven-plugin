@@ -351,7 +351,7 @@ public class GenerateDdlMojo extends AbstractMojo {
                                            dirPath,
                                            dialect.name().toLowerCase(Locale.ENGLISH)));
         export.setFormat(true);
-        export.execute(true, false, false, false);
+        export.execute(true, false, false, true);
     }
 
     private void processPersistenceXml(final Configuration configuration) {
