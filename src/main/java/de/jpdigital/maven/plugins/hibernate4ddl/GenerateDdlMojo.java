@@ -107,7 +107,7 @@ public class GenerateDdlMojo extends AbstractMojo {
         defaultValue = "${basedir}/src/main/resources/META-INF/persistence.xml",
         required = false)
     private File persistenceXml;
-    
+
     @Component
     private transient MavenProject project;
 
@@ -121,7 +121,7 @@ public class GenerateDdlMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         final File outputDir = outputDirectory;
-        
+
         getLog().info(String.format("Generating DDL SQL files in %s.",
                                     outputDir.getAbsolutePath()));
 
@@ -143,11 +143,10 @@ public class GenerateDdlMojo extends AbstractMojo {
         //Find the entity classes in the packages.
         final Set<Class<?>> entityClasses = new HashSet<>();
         for (final String packageName : packages) {
-            final Set<Class<?>> packageEntities = 
-            EntityFinder.forPackage(
+            final Set<Class<?>> packageEntities = EntityFinder.forPackage(
                 project, getLog(), packageName).findEntities();
             entityClasses.addAll(packageEntities);
-            
+
             //findEntitiesForPackage(packageName, entityClasses);
         }
         getLog().info(String.format("Found %d entities.",
@@ -158,43 +157,43 @@ public class GenerateDdlMojo extends AbstractMojo {
             generateDdl(dialect, entityClasses);
         }
     }
-    
+
     public File getOutputDirectory() {
         return outputDirectory;
     }
-    
+
     public void setOutputDirectory(final File outputDirectory) {
         this.outputDirectory = outputDirectory;
     }
-    
+
     public String[] getPackages() {
         return Arrays.copyOf(packages, packages.length);
     }
-    
+
     public void setPackages(final String... packages) {
         this.packages = Arrays.copyOf(packages, packages.length);
     }
-    
+
     public String[] getDialects() {
         return Arrays.copyOf(dialects, dialects.length);
     }
-    
+
     public void setDialects(final String... dialects) {
         this.dialects = Arrays.copyOf(dialects, dialects.length);
     }
-    
+
     public boolean isUseEnvers() {
         return useEnvers;
     }
-    
+
     public void setUseEnvers(final boolean useEnvers) {
         this.useEnvers = useEnvers;
     }
-    
+
     public File getPersistenceXml() {
         return persistenceXml;
     }
-    
+
     public void setPersistenceXml(final File persistenceXml) {
         this.persistenceXml = persistenceXml;
     }
@@ -214,7 +213,7 @@ public class GenerateDdlMojo extends AbstractMojo {
     private void convertDialect(final String dialect,
                                 final Set<Dialect> dialectsList)
         throws MojoFailureException {
-        
+
         try {
             dialectsList.add(Dialect
                 .valueOf(dialect.toUpperCase(Locale.ENGLISH)));
@@ -223,7 +222,7 @@ public class GenerateDdlMojo extends AbstractMojo {
             for (final Dialect avilable : Dialect.values()) {
                 buffer.append(avilable.toString()).append('\n');
             }
-            
+
             throw new MojoFailureException(
                 String.format(
                     "Can't convert the configured dialect '%s' to a dialect classname. "
@@ -234,104 +233,6 @@ public class GenerateDdlMojo extends AbstractMojo {
                 ex);
         }
     }
-
-    /**
-     * Helper method for finding a entity classes in a package. The entity
-     * classes must be annotated with the {@link Entity} annotation. The method
-     * uses the Reflections library for finding the entity classes.
-     *
-     * @param packageName   The packages in which the entities are found.
-     * @param entityClasses A set in which the entity classes are stored.
-     *
-     * @throws MojoFailureException if something goes wrong in the method.
-     */
-//    private void findEntitiesForPackage(final String packageName,
-//                                        final Set<Class<?>> entityClasses)
-//        throws MojoFailureException {
-//        
-//        final Reflections reflections = createReflections(packageName);
-//        final Set<Class<?>> classesWithEntity = reflections
-//            .getTypesAnnotatedWith(Entity.class);
-//        for (final Class<?> entityClass : classesWithEntity) {
-//            entityClasses.add(entityClass);
-//        }
-//    }
-
-    /**
-     * Helper method for creating the {@link Reflections} instance used by the
-     * other methods for a specific package. Also does some class loader magic.
-     *
-     * @param packageName Fully qualified name of the package.
-     *
-     * @return A reflections instance for the provided package.
-     *
-     * @throws MojoFailureException If something goes wrong.
-     */
-//    private Reflections createReflections(final String packageName)
-//        throws MojoFailureException {
-//        
-//        if (project == null) {
-//            return new Reflections(ClasspathHelper.forPackage(packageName));
-//        } else {
-//            final List<String> classPathElems;
-//            try {
-//                classPathElems = project.getCompileClasspathElements();
-//            } catch (DependencyResolutionRequiredException ex) {
-//                throw new MojoFailureException(
-//                    "Failed to resolve project classpath.", ex);
-//            }
-//            final List<URL> classPathUrls = new ArrayList<>();
-//            for (final String classPathElem : classPathElems) {
-//                getLog().info(String
-//                    .format("Adding classpath elemement '%s'...", classPathElem));
-//                classPathUrls.add(classPathElemToUrl(classPathElem));
-//            }
-//            
-//            getLog().info("Classpath URLs:");
-//            for (final URL url : classPathUrls) {
-//                getLog().info(String.format("\t%s", url.toString()));
-//            }
-//
-//            //Here we have to do some classloader magic to ensure that the Reflections instance
-//            //uses the correct class loader. Which is the one which has access to the compiled 
-//            //classes
-//            final URLClassLoader classLoader = new URLClassLoader(
-//                classPathUrls.toArray(new URL[classPathUrls.size()]),
-//                Thread.currentThread().getContextClassLoader());
-//            Thread.currentThread().setContextClassLoader(classLoader);
-//            
-//            return new Reflections(ClasspathHelper.forPackage(packageName,
-//                                                              classLoader));
-//            
-//        }
-//    }
-
-    /**
-     * Helper method for converting a fully qualified package name from the
-     * string representation to a a URL.
-     *
-     * @param classPathElem The class path to convert.
-     *
-     * @return A URL for the package.
-     *
-     * @throws MojoFailureException If something goes wrong.
-     */
-//    private URL classPathElemToUrl(final String classPathElem) throws
-//        MojoFailureException {
-//        final File file = new File(classPathElem);
-//        final URL url;
-//        try {
-//            url = file.toURI().toURL();
-//        } catch (MalformedURLException ex) {
-//            throw new MojoFailureException(
-//                String.format(
-//                    "Failed to convert classpath element '%s' to an URL.",
-//                    classPathElem),
-//                ex);
-//        }
-//        
-//        return url;
-//    }
 
     /**
      * Helper method for generating the DDL classes for a specific dialect. This
@@ -356,27 +257,27 @@ public class GenerateDdlMojo extends AbstractMojo {
                              final Set<Class<?>> entityClasses)
         throws MojoFailureException {
         final Configuration configuration = new Configuration();
-        
+
         processPersistenceXml(configuration);
-        
+
         configuration.setProperty("hibernate.hbm2ddl.auto", "create");
-        
+
         for (final Class<?> entityClass : entityClasses) {
             configuration.addAnnotatedClass(entityClass);
         }
-        
+
         configuration
             .setProperty("hibernate.dialect", dialect.getDialectClass());
-        
+
         final SchemaExport export;
         if (useEnvers) {
             export = new EnversSchemaGenerator(configuration).export();
         } else {
             export = new SchemaExport(configuration);
-            
+
         }
         export.setDelimiter(";");
-        
+
         final Path tmpDir;
         try {
             tmpDir = Files.createTempDirectory(
@@ -391,44 +292,118 @@ public class GenerateDdlMojo extends AbstractMojo {
                 Locale.ENGLISH)));
         export.setFormat(true);
         export.execute(true, false, false, true);
-        
-        final Path outputDir = outputDirectory.toPath();
-        if (Files.exists(outputDir)) {
-            if (!Files.isDirectory(outputDir)) {
-                throw new MojoFailureException("A file with the name of the "
-                                                   + "output directory already "
-                                                   + "exists but is not a "
-                                                   + "directory.");
-            }
-        } else {
-            try {
-                Files.createDirectory(outputDir);
+
+        writeOutputFile(dialect, tmpDir);
+    }
+
+    private void processPersistenceXml(final Configuration configuration) {
+        if (persistenceXml != null) {
+            getLog()
+                .info("persistence.xml available, locking for properties...");
+
+            try (InputStream inStream = new FileInputStream(persistenceXml)) {
+                final SAXParser parser;
+
+                parser = SAXParserFactory.newInstance().newSAXParser();
+
+                parser.parse(inStream, new PersistenceXmlHandler(configuration));
             } catch (IOException ex) {
-                throw new MojoFailureException(
-                    String.format("Failed to create the output directory: %s",
-                                  ex.getMessage()),
+                getLog().error(
+                    "Failed to open persistence.xml. Not processing properties.",
+                    ex);
+            } catch (ParserConfigurationException | SAXException ex) {
+                getLog().error(
+                    "Error parsing persistence.xml. Not processing properties",
                     ex);
             }
         }
-        
-        final String dirPath;
-        if (outputDirectory.getAbsolutePath().endsWith("/")) {
-            dirPath = outputDirectory.getAbsolutePath().substring(
-                0, outputDirectory.getAbsolutePath().length());
-        } else {
-            dirPath = outputDirectory.getAbsolutePath();
+    }
+
+    private class PersistenceXmlHandler extends DefaultHandler {
+
+        private final transient Configuration configuration;
+
+        public PersistenceXmlHandler(final Configuration configuration) {
+            this.configuration = configuration;
         }
-        
-        final Path outputFilePath = Paths.get(String.format(
-            "%s/%s.sql", dirPath, dialect.name().toLowerCase(Locale.ENGLISH)));
+
+        @Override
+        public void startElement(final String uri,
+                                 final String localName,
+                                 final String qName,
+                                 final Attributes attributes) {
+            getLog().info(String.format(
+                "Found element with uri = '%s', localName = '%s', qName = '%s'...",
+                uri,
+                localName,
+                qName));
+
+            if ("property".equals(qName)) {
+                final String propertyName = attributes.getValue("name");
+                final String propertyValue = attributes.getValue("value");
+
+                if (propertyName != null && !propertyName.isEmpty()
+                        && propertyValue != null && !propertyValue.isEmpty()) {
+                    getLog().info(String.format(
+                        "Found property %s = %s in persistence.xml",
+                        propertyName,
+                        propertyValue));
+                    configuration.setProperty(propertyName, propertyValue);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Helper method for writing the output files if necessary. The
+     * {@link #generateDdl(Dialect, Set)} method writes the output to temporary
+     * files. This method checks of the output files have changed and copies the
+     * files if necessary.
+     */
+    private void writeOutputFile(final Dialect dialect,
+                                 final Path tmpDir)
+        throws MojoFailureException {
+//        final Path outputDir = outputDirectory.toPath();
+//        if (Files.exists(outputDir)) {
+//            if (!Files.isDirectory(outputDir)) {
+//                throw new MojoFailureException("A file with the name of the "
+//                                                   + "output directory already "
+//                                                   + "exists but is not a "
+//                                                   + "directory.");
+//            }
+//        } else {
+//            try {
+//                Files.createDirectory(outputDir);
+//            } catch (IOException ex) {
+//                throw new MojoFailureException(
+//                    String.format("Failed to create the output directory: %s",
+//                                  ex.getMessage()),
+//                    ex);
+//            }
+//        }
+
+        createOutputDir();
+
+//        final String dirPath;
+//        if (outputDirectory.getAbsolutePath().endsWith("/")) {
+//            dirPath = outputDirectory.getAbsolutePath().substring(
+//                0, outputDirectory.getAbsolutePath().length());
+//        } else {
+//            dirPath = outputDirectory.getAbsolutePath();
+//        }
+//
+//        final Path outputFilePath = Paths.get(String.format(
+//            "%s/%s.sql", dirPath, dialect.name().toLowerCase(Locale.ENGLISH)));
+        final Path outputFilePath = createOutputFilePath(dialect);
         final Path tmpFilePath = Paths.get(String.format(
             "%s/%s.sql",
             tmpDir.toString(),
             dialect.name().toLowerCase(
                 Locale.ENGLISH)));
-        
+
         if (Files.exists(outputFilePath)) {
-            
+
             final String outputFileData;
             final String tmpFileData;
             try {
@@ -445,7 +420,7 @@ public class GenerateDdlMojo extends AbstractMojo {
                                   ex.getMessage()),
                     ex);
             }
-            
+
             try {
                 if (!tmpFileData.equals(outputFileData)) {
                     Files.deleteIfExists(outputFilePath);
@@ -469,64 +444,46 @@ public class GenerateDdlMojo extends AbstractMojo {
             }
         }
     }
-    
-    private void processPersistenceXml(final Configuration configuration) {
-        if (persistenceXml != null) {
-            getLog()
-                .info("persistence.xml available, locking for properties...");
-            
-            try (InputStream inStream = new FileInputStream(persistenceXml)) {
-                final SAXParser parser;
-                
-                parser = SAXParserFactory.newInstance().newSAXParser();
-                
-                parser.parse(inStream, new PersistenceXmlHandler(configuration));
+
+    /**
+     * Helper for creating the output directory if it does not exist.
+     *
+     * @return A {@link Path} object describing the output directory.
+     *
+     * @throws MojoFailureException If The creation of the output directory
+     *                              fails.
+     */
+    private void createOutputDir() throws MojoFailureException {
+        final Path outputDir = outputDirectory.toPath();
+        if (Files.exists(outputDir)) {
+            if (!Files.isDirectory(outputDir)) {
+                throw new MojoFailureException("A file with the name of the "
+                                                   + "output directory already "
+                                                   + "exists but is not a "
+                                                   + "directory.");
+            }
+        } else {
+            try {
+                Files.createDirectory(outputDir);
             } catch (IOException ex) {
-                getLog().error(
-                    "Failed to open persistence.xml. Not processing properties.",
-                    ex);
-            } catch (ParserConfigurationException | SAXException ex) {
-                getLog().error(
-                    "Error parsing persistence.xml. Not processing properties",
+                throw new MojoFailureException(
+                    String.format("Failed to create the output directory: %s",
+                                  ex.getMessage()),
                     ex);
             }
         }
     }
-    
-    private class PersistenceXmlHandler extends DefaultHandler {
-        
-        private final transient Configuration configuration;
-        
-        public PersistenceXmlHandler(final Configuration configuration) {
-            this.configuration = configuration;
+
+    private Path createOutputFilePath(final Dialect dialect) {
+        final String dirPath;
+        if (outputDirectory.getAbsolutePath().endsWith("/")) {
+            dirPath = outputDirectory.getAbsolutePath().substring(
+                0, outputDirectory.getAbsolutePath().length());
+        } else {
+            dirPath = outputDirectory.getAbsolutePath();
         }
-        
-        @Override
-        public void startElement(final String uri,
-                                 final String localName,
-                                 final String qName,
-                                 final Attributes attributes) {
-            getLog().info(String.format(
-                "Found element with uri = '%s', localName = '%s', qName = '%s'...",
-                uri,
-                localName,
-                qName));
-            
-            if ("property".equals(qName)) {
-                final String propertyName = attributes.getValue("name");
-                final String propertyValue = attributes.getValue("value");
-                
-                if (propertyName != null && !propertyName.isEmpty()
-                        && propertyValue != null && !propertyValue.isEmpty()) {
-                    getLog().info(String.format(
-                        "Found property %s = %s in persistence.xml",
-                        propertyName,
-                        propertyValue));
-                    configuration.setProperty(propertyName, propertyValue);
-                }
-            }
-        }
-        
+
+        return Paths.get(String.format(
+            "%s/%s.sql", dirPath, dialect.name().toLowerCase(Locale.ENGLISH)));
     }
-    
 }
