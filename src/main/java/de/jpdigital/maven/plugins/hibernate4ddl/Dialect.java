@@ -17,15 +17,19 @@
 package de.jpdigital.maven.plugins.hibernate4ddl;
 
 /**
- *  This enumeration provides constants for all dialects supported by according to 
- * @{link http://docs.jboss.org/hibernate/orm/4.3/manual/en-US/html_single/#configuration-optional-dialects}.
- * Also it provides the convenient method {@link #getDialectClass()} for getting the classname
- * of the Hibernate dialect.
- * 
- * @author Jens Pelzetter <jens@jp-digital.de>
+ * This enumeration provides constants for all dialects supported by Hibernate.
+ *
+ * The dialects supported by Hibernate can be found in the 
+ * <a href="http://docs.jboss.org/hibernate/orm/4.3/manual/en-US/html_single/#configuration-optional-dialects">
+ * Hibernate documentation</a>.
+ * Also this enumeration provides the convenient method
+ * {@link #getDialectClass()} for getting the classname of the Hibernate
+ * dialect.
+ *
+ * @author <a href="mailto:jens@jp-digital.de">Jens Pelzetter</a>
  */
 public enum Dialect {
-    
+
     CUBRID("org.hibernate.dialect.CUBRIDDialect"),
     DB2("org.hibernate.dialect.DB2Dialect"),
     DB2_AS400("org.hibernate.dialect.DB2400Dialect"),
@@ -79,7 +83,7 @@ public enum Dialect {
 
     /**
      * Private constructor, used to create the Enum instances for each dialect.
-     * 
+     *
      * @param dialectClass The dialect class for the specific dialect.
      */
     private Dialect(final String dialectClass) {
@@ -88,9 +92,10 @@ public enum Dialect {
 
     /**
      * Getter for the dialect class.
-     * 
-     * @return The name of the dialect class, for example 
-     * {@code org.hibernate.dialect.PostgreSQL9Dialect} for {@link #POSTGRESQL9}.
+     *
+     * @return The name of the dialect class, for example
+     *         {@code org.hibernate.dialect.PostgreSQL9Dialect} for
+     *         {@link #POSTGRESQL9}.
      */
     public String getDialectClass() {
         return dialectClass;

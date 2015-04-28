@@ -118,10 +118,11 @@ public class GenerateDdlMojo extends AbstractMojo {
     private transient MavenProject project;
 
     /**
-     * The Mojos execute method.
+     * The Mojo's execute method.
      *
-     * @throws MojoExecutionException
-     * @throws MojoFailureException
+     * @throws MojoExecutionException if the Mojo can't be executed.
+     * @throws MojoFailureException   if something goes wrong while to Mojo is
+     *                                executed.
      */
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -240,8 +241,10 @@ public class GenerateDdlMojo extends AbstractMojo {
      * classes must be annotated with the {@link Entity} annotation. The method
      * uses the Reflections library for finding the entity classes.
      *
-     * @param packageName
-     * @param entityClasses
+     * @param packageName   The packages in which the entities are found.
+     * @param entityClasses A set in which the entity classes are stored.
+     *
+     * @throws MojoFailureException if something goes wrong in the method.
      */
     private void findEntitiesForPackage(final String packageName,
                                         final Set<Class<?>> entityClasses)
@@ -341,11 +344,12 @@ public class GenerateDdlMojo extends AbstractMojo {
      * are formatted nicely. After that it calls the
      * {@link SchemaExport#execute(boolean, boolean, boolean, boolean)} method
      * which will create the SQL script file. The method is called in a way
-     * which requires no database connection.
+     * which requires <em>no</em> database connection.
      *
      *
-     * @param dialect
-     * @param entityClasses
+     * @param dialect       The dialect for which the DDL files is generated.
+     * @param entityClasses The entity classes for which the DDL file is
+     *                      generated.
      *
      * @throws MojoFailureException if something goes wrong.
      */
