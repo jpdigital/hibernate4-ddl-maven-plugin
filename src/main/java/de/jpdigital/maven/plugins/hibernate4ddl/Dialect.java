@@ -26,7 +26,7 @@ package de.jpdigital.maven.plugins.hibernate4ddl;
  * {@link #getDialectClass()} for getting the classname of the Hibernate
  * dialect.
  *
- * @author <a href="mailto:jens@jp-digital.de">Jens Pelzetter</a>
+ * @author <a href="mailto:jens.pelzetter@googlemail.com">Jens Pelzetter</a>
  */
 public enum Dialect {
 

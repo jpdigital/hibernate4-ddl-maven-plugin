@@ -36,8 +36,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
@@ -50,8 +48,7 @@ import static org.junit.Assert.*;
 /**
  * TestSuite for testing the {@link GenerateDdlMojo}.
  *
- * @author Jens Pelzetter <jens@jp-digital.de>
- * @version $Id$
+ * @author <a href="mailto:jens.pelzetter@googlemail.com">Jens Pelzetter</a>
  */
 public class DdlMojoTest {
 

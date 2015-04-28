@@ -27,22 +27,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import javax.persistence.Entity;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -50,12 +43,11 @@ import org.apache.maven.project.MavenProject;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.envers.tools.hbm2ddl.EnversSchemaGenerator;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
-import org.reflections.Reflections;
-import org.reflections.util.ClasspathHelper;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -63,6 +55,8 @@ import java.nio.file.Paths;
 /**
  * Goal which creates DDL SQL files for the JPA entities in the project (using
  * the Hibernate 4 SchemaExport class}.
+ *
+ * @author <a href="mailto:jens.pelzetter@googlemail.com">Jens Pelzetter</a>
  */
 @Mojo(name = "gen-ddl",
       defaultPhase = LifecyclePhase.PROCESS_CLASSES,
@@ -113,7 +107,7 @@ public class GenerateDdlMojo extends AbstractMojo {
         defaultValue = "${basedir}/src/main/resources/META-INF/persistence.xml",
         required = false)
     private File persistenceXml;
-
+    
     @Component
     private transient MavenProject project;
 
@@ -127,7 +121,7 @@ public class GenerateDdlMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         final File outputDir = outputDirectory;
-
+        
         getLog().info(String.format("Generating DDL SQL files in %s.",
                                     outputDir.getAbsolutePath()));
 
@@ -149,7 +143,12 @@ public class GenerateDdlMojo extends AbstractMojo {
         //Find the entity classes in the packages.
         final Set<Class<?>> entityClasses = new HashSet<>();
         for (final String packageName : packages) {
-            findEntitiesForPackage(packageName, entityClasses);
+            final Set<Class<?>> packageEntities = 
+            EntityFinder.forPackage(
+                project, getLog(), packageName).findEntities();
+            entityClasses.addAll(packageEntities);
+            
+            //findEntitiesForPackage(packageName, entityClasses);
         }
         getLog().info(String.format("Found %d entities.",
                                     entityClasses.size()));
@@ -159,43 +158,43 @@ public class GenerateDdlMojo extends AbstractMojo {
             generateDdl(dialect, entityClasses);
         }
     }
-
+    
     public File getOutputDirectory() {
         return outputDirectory;
     }
-
+    
     public void setOutputDirectory(final File outputDirectory) {
         this.outputDirectory = outputDirectory;
     }
-
+    
     public String[] getPackages() {
         return Arrays.copyOf(packages, packages.length);
     }
-
-    public void setPackages(final String[] packages) {
+    
+    public void setPackages(final String... packages) {
         this.packages = Arrays.copyOf(packages, packages.length);
     }
-
+    
     public String[] getDialects() {
         return Arrays.copyOf(dialects, dialects.length);
     }
-
-    public void setDialects(final String[] dialects) {
+    
+    public void setDialects(final String... dialects) {
         this.dialects = Arrays.copyOf(dialects, dialects.length);
     }
-
+    
     public boolean isUseEnvers() {
         return useEnvers;
     }
-
+    
     public void setUseEnvers(final boolean useEnvers) {
         this.useEnvers = useEnvers;
     }
-
+    
     public File getPersistenceXml() {
         return persistenceXml;
     }
-
+    
     public void setPersistenceXml(final File persistenceXml) {
         this.persistenceXml = persistenceXml;
     }
@@ -215,7 +214,7 @@ public class GenerateDdlMojo extends AbstractMojo {
     private void convertDialect(final String dialect,
                                 final Set<Dialect> dialectsList)
         throws MojoFailureException {
-
+        
         try {
             dialectsList.add(Dialect
                 .valueOf(dialect.toUpperCase(Locale.ENGLISH)));
@@ -224,7 +223,7 @@ public class GenerateDdlMojo extends AbstractMojo {
             for (final Dialect avilable : Dialect.values()) {
                 buffer.append(avilable.toString()).append('\n');
             }
-
+            
             throw new MojoFailureException(
                 String.format(
                     "Can't convert the configured dialect '%s' to a dialect classname. "
@@ -246,17 +245,17 @@ public class GenerateDdlMojo extends AbstractMojo {
      *
      * @throws MojoFailureException if something goes wrong in the method.
      */
-    private void findEntitiesForPackage(final String packageName,
-                                        final Set<Class<?>> entityClasses)
-        throws MojoFailureException {
-
-        final Reflections reflections = createReflections(packageName);
-        final Set<Class<?>> classesWithEntity = reflections
-            .getTypesAnnotatedWith(Entity.class);
-        for (final Class<?> entityClass : classesWithEntity) {
-            entityClasses.add(entityClass);
-        }
-    }
+//    private void findEntitiesForPackage(final String packageName,
+//                                        final Set<Class<?>> entityClasses)
+//        throws MojoFailureException {
+//        
+//        final Reflections reflections = createReflections(packageName);
+//        final Set<Class<?>> classesWithEntity = reflections
+//            .getTypesAnnotatedWith(Entity.class);
+//        for (final Class<?> entityClass : classesWithEntity) {
+//            entityClasses.add(entityClass);
+//        }
+//    }
 
     /**
      * Helper method for creating the {@link Reflections} instance used by the
@@ -268,44 +267,44 @@ public class GenerateDdlMojo extends AbstractMojo {
      *
      * @throws MojoFailureException If something goes wrong.
      */
-    private Reflections createReflections(final String packageName)
-        throws MojoFailureException {
-
-        if (project == null) {
-            return new Reflections(ClasspathHelper.forPackage(packageName));
-        } else {
-            final List<String> classPathElems;
-            try {
-                classPathElems = project.getCompileClasspathElements();
-            } catch (DependencyResolutionRequiredException ex) {
-                throw new MojoFailureException(
-                    "Failed to resolve project classpath.", ex);
-            }
-            final List<URL> classPathUrls = new ArrayList<>();
-            for (final String classPathElem : classPathElems) {
-                getLog().info(String
-                    .format("Adding classpath elemement '%s'...", classPathElem));
-                classPathUrls.add(classPathElemToUrl(classPathElem));
-            }
-
-            getLog().info("Classpath URLs:");
-            for (final URL url : classPathUrls) {
-                getLog().info(String.format("\t%s", url.toString()));
-            }
-
-            //Here we have to do some classloader magic to ensure that the Reflections instance
-            //uses the correct class loader. Which is the one which has access to the compiled 
-            //classes
-            final URLClassLoader classLoader = new URLClassLoader(
-                classPathUrls.toArray(new URL[classPathUrls.size()]),
-                Thread.currentThread().getContextClassLoader());
-            Thread.currentThread().setContextClassLoader(classLoader);
-
-            return new Reflections(ClasspathHelper.forPackage(packageName,
-                                                              classLoader));
-
-        }
-    }
+//    private Reflections createReflections(final String packageName)
+//        throws MojoFailureException {
+//        
+//        if (project == null) {
+//            return new Reflections(ClasspathHelper.forPackage(packageName));
+//        } else {
+//            final List<String> classPathElems;
+//            try {
+//                classPathElems = project.getCompileClasspathElements();
+//            } catch (DependencyResolutionRequiredException ex) {
+//                throw new MojoFailureException(
+//                    "Failed to resolve project classpath.", ex);
+//            }
+//            final List<URL> classPathUrls = new ArrayList<>();
+//            for (final String classPathElem : classPathElems) {
+//                getLog().info(String
+//                    .format("Adding classpath elemement '%s'...", classPathElem));
+//                classPathUrls.add(classPathElemToUrl(classPathElem));
+//            }
+//            
+//            getLog().info("Classpath URLs:");
+//            for (final URL url : classPathUrls) {
+//                getLog().info(String.format("\t%s", url.toString()));
+//            }
+//
+//            //Here we have to do some classloader magic to ensure that the Reflections instance
+//            //uses the correct class loader. Which is the one which has access to the compiled 
+//            //classes
+//            final URLClassLoader classLoader = new URLClassLoader(
+//                classPathUrls.toArray(new URL[classPathUrls.size()]),
+//                Thread.currentThread().getContextClassLoader());
+//            Thread.currentThread().setContextClassLoader(classLoader);
+//            
+//            return new Reflections(ClasspathHelper.forPackage(packageName,
+//                                                              classLoader));
+//            
+//        }
+//    }
 
     /**
      * Helper method for converting a fully qualified package name from the
@@ -317,22 +316,22 @@ public class GenerateDdlMojo extends AbstractMojo {
      *
      * @throws MojoFailureException If something goes wrong.
      */
-    private URL classPathElemToUrl(final String classPathElem) throws
-        MojoFailureException {
-        final File file = new File(classPathElem);
-        final URL url;
-        try {
-            url = file.toURI().toURL();
-        } catch (MalformedURLException ex) {
-            throw new MojoFailureException(
-                String.format(
-                    "Failed to convert classpath element '%s' to an URL.",
-                    classPathElem),
-                ex);
-        }
-
-        return url;
-    }
+//    private URL classPathElemToUrl(final String classPathElem) throws
+//        MojoFailureException {
+//        final File file = new File(classPathElem);
+//        final URL url;
+//        try {
+//            url = file.toURI().toURL();
+//        } catch (MalformedURLException ex) {
+//            throw new MojoFailureException(
+//                String.format(
+//                    "Failed to convert classpath element '%s' to an URL.",
+//                    classPathElem),
+//                ex);
+//        }
+//        
+//        return url;
+//    }
 
     /**
      * Helper method for generating the DDL classes for a specific dialect. This
@@ -357,27 +356,27 @@ public class GenerateDdlMojo extends AbstractMojo {
                              final Set<Class<?>> entityClasses)
         throws MojoFailureException {
         final Configuration configuration = new Configuration();
-
+        
         processPersistenceXml(configuration);
-
+        
         configuration.setProperty("hibernate.hbm2ddl.auto", "create");
-
+        
         for (final Class<?> entityClass : entityClasses) {
             configuration.addAnnotatedClass(entityClass);
         }
-
+        
         configuration
             .setProperty("hibernate.dialect", dialect.getDialectClass());
-
+        
         final SchemaExport export;
         if (useEnvers) {
             export = new EnversSchemaGenerator(configuration).export();
         } else {
             export = new SchemaExport(configuration);
-
+            
         }
         export.setDelimiter(";");
-
+        
         final Path tmpDir;
         try {
             tmpDir = Files.createTempDirectory(
@@ -392,7 +391,7 @@ public class GenerateDdlMojo extends AbstractMojo {
                 Locale.ENGLISH)));
         export.setFormat(true);
         export.execute(true, false, false, true);
-
+        
         final Path outputDir = outputDirectory.toPath();
         if (Files.exists(outputDir)) {
             if (!Files.isDirectory(outputDir)) {
@@ -411,7 +410,7 @@ public class GenerateDdlMojo extends AbstractMojo {
                     ex);
             }
         }
-
+        
         final String dirPath;
         if (outputDirectory.getAbsolutePath().endsWith("/")) {
             dirPath = outputDirectory.getAbsolutePath().substring(
@@ -419,7 +418,7 @@ public class GenerateDdlMojo extends AbstractMojo {
         } else {
             dirPath = outputDirectory.getAbsolutePath();
         }
-
+        
         final Path outputFilePath = Paths.get(String.format(
             "%s/%s.sql", dirPath, dialect.name().toLowerCase(Locale.ENGLISH)));
         final Path tmpFilePath = Paths.get(String.format(
@@ -427,16 +426,18 @@ public class GenerateDdlMojo extends AbstractMojo {
             tmpDir.toString(),
             dialect.name().toLowerCase(
                 Locale.ENGLISH)));
-
+        
         if (Files.exists(outputFilePath)) {
-
+            
             final String outputFileData;
             final String tmpFileData;
             try {
                 outputFileData = new String(
-                    Files.readAllBytes(outputFilePath));
+                    Files.readAllBytes(outputFilePath),
+                    Charset.forName("UTF-8"));
                 tmpFileData = new String(
-                    Files.readAllBytes(tmpFilePath));
+                    Files.readAllBytes(tmpFilePath),
+                    Charset.forName("UTF-8"));
             } catch (IOException ex) {
                 throw new MojoFailureException(
                     String.format("Failed to check if DDL file content has "
@@ -444,7 +445,7 @@ public class GenerateDdlMojo extends AbstractMojo {
                                   ex.getMessage()),
                     ex);
             }
-
+            
             try {
                 if (!tmpFileData.equals(outputFileData)) {
                     Files.deleteIfExists(outputFilePath);
@@ -467,35 +468,18 @@ public class GenerateDdlMojo extends AbstractMojo {
                     ex);
             }
         }
-
-//        final File outputFile = outputFilePath.toFile();
-//        final File tmpFile = Paths.get(String.format(
-//            "%s/%s.sql",
-//            tmpDir.toString(),
-//            dialect.name().toLowerCase(
-//                Locale.ENGLISH))).toFile();
-        //Check if the output directory exists.
-        //        export.setOutputFile(String.format("%s/%s.sql",
-        //                                           dirPath,
-        //                                           dialect.name().toLowerCase(
-        //                                               Locale.ENGLISH)));
-        //        export.setFormat(true);
-        //        export.execute(true, false, false, true);
-        {
-
-        }
     }
-
+    
     private void processPersistenceXml(final Configuration configuration) {
         if (persistenceXml != null) {
             getLog()
                 .info("persistence.xml available, locking for properties...");
-
+            
             try (InputStream inStream = new FileInputStream(persistenceXml)) {
                 final SAXParser parser;
-
+                
                 parser = SAXParserFactory.newInstance().newSAXParser();
-
+                
                 parser.parse(inStream, new PersistenceXmlHandler(configuration));
             } catch (IOException ex) {
                 getLog().error(
@@ -508,15 +492,15 @@ public class GenerateDdlMojo extends AbstractMojo {
             }
         }
     }
-
+    
     private class PersistenceXmlHandler extends DefaultHandler {
-
+        
         private final transient Configuration configuration;
-
+        
         public PersistenceXmlHandler(final Configuration configuration) {
             this.configuration = configuration;
         }
-
+        
         @Override
         public void startElement(final String uri,
                                  final String localName,
@@ -527,11 +511,11 @@ public class GenerateDdlMojo extends AbstractMojo {
                 uri,
                 localName,
                 qName));
-
+            
             if ("property".equals(qName)) {
                 final String propertyName = attributes.getValue("name");
                 final String propertyValue = attributes.getValue("value");
-
+                
                 if (propertyName != null && !propertyName.isEmpty()
                         && propertyValue != null && !propertyValue.isEmpty()) {
                     getLog().info(String.format(
@@ -542,7 +526,7 @@ public class GenerateDdlMojo extends AbstractMojo {
                 }
             }
         }
-
+        
     }
-
+    
 }
