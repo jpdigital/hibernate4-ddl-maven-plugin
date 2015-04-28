@@ -160,14 +160,14 @@ public class DdlMojoTest {
                        fileExists(path));
 
             assertTrue(String.format(
-                "DDL file '%s' does not contain 'create table' statement for"
+                "DDL file '%s' does not contain 'create table' statement for "
                     + "persons entity",
                 dialect.toLowerCase(Locale.ENGLISH)),
                        fileContainsPersonEntity(path));
 
             assertTrue(String.format(
-                "DDL file '%s' does not contain 'create table' statement for"
-                    + "persons entity",
+                "DDL file '%s' does not contain 'create table' statement for "
+                    + "company entity",
                 dialect.toLowerCase(Locale.ENGLISH)),
                        fileContainsCompanyEntity(path));
 
@@ -526,7 +526,9 @@ public class DdlMojoTest {
         mojo.setOutputDirectory(new File(TEST_DIR));
 
         final String[] packages = new String[]{
-            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",};
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
+        };
         mojo.setPackages(packages);
 
         final String[] dialects = new String[]{
@@ -536,6 +538,8 @@ public class DdlMojoTest {
         };
         mojo.setDialects(dialects);
 
+        mojo.setUseEnvers(false);
+        
         mojo.execute();
 
         final Map<String, Long> timestamps = new HashMap<>();
@@ -549,11 +553,13 @@ public class DdlMojoTest {
             timestamps.put(dialect, file.lastModified());
         }
 
-        final String[] packages2 = new String[]{
-            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",
-            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
-        };
-        mojo.setPackages(packages2);
+//        final String[] packages2 = new String[]{
+//            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",
+//            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
+//        };
+//        mojo.setPackages(packages2);
+        
+        mojo.setUseEnvers(true);
 
         Thread.sleep(2500);
         mojo.execute();

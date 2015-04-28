@@ -36,10 +36,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
 import javax.persistence.Entity;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -53,6 +55,10 @@ import org.reflections.util.ClasspathHelper;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Goal which creates DDL SQL files for the JPA entities in the project (using
@@ -144,7 +150,8 @@ public class GenerateDdlMojo extends AbstractMojo {
         for (final String packageName : packages) {
             findEntitiesForPackage(packageName, entityClasses);
         }
-        getLog().info(String.format("Found %d entities.", entityClasses.size()));
+        getLog().info(String.format("Found %d entities.",
+                                    entityClasses.size()));
 
         //Generate the SQL scripts
         for (final Dialect dialect : dialectsList) {
@@ -258,8 +265,9 @@ public class GenerateDdlMojo extends AbstractMojo {
      *
      * @throws MojoFailureException If something goes wrong.
      */
-    private Reflections createReflections(final String packageName) throws
-        MojoFailureException {
+    private Reflections createReflections(final String packageName)
+        throws MojoFailureException {
+
         if (project == null) {
             return new Reflections(ClasspathHelper.forPackage(packageName));
         } else {
@@ -292,6 +300,7 @@ public class GenerateDdlMojo extends AbstractMojo {
 
             return new Reflections(ClasspathHelper.forPackage(packageName,
                                                               classLoader));
+
         }
     }
 
@@ -337,9 +346,12 @@ public class GenerateDdlMojo extends AbstractMojo {
      *
      * @param dialect
      * @param entityClasses
+     *
+     * @throws MojoFailureException if something goes wrong.
      */
     private void generateDdl(final Dialect dialect,
-                             final Set<Class<?>> entityClasses) {
+                             final Set<Class<?>> entityClasses)
+        throws MojoFailureException {
         final Configuration configuration = new Configuration();
 
         processPersistenceXml(configuration);
@@ -362,6 +374,40 @@ public class GenerateDdlMojo extends AbstractMojo {
         }
         export.setDelimiter(";");
 
+        final Path tmpDir;
+        try {
+            tmpDir = Files.createTempDirectory(
+                "maven-hibernate-ddl-plugin");
+        } catch (IOException ex) {
+            throw new MojoFailureException("Failed to create work dir.", ex);
+        }
+        export.setOutputFile(String.format(
+            "%s/%s.sql",
+            tmpDir.toString(),
+            dialect.name().toLowerCase(
+                Locale.ENGLISH)));
+        export.setFormat(true);
+        export.execute(true, false, false, true);
+
+        final Path outputDir = outputDirectory.toPath();
+        if (Files.exists(outputDir)) {
+            if (!Files.isDirectory(outputDir)) {
+                throw new MojoFailureException("A file with the name of the "
+                                                   + "output directory already "
+                                                   + "exists but is not a "
+                                                   + "directory.");
+            }
+        } else {
+            try {
+                Files.createDirectory(outputDir);
+            } catch (IOException ex) {
+                throw new MojoFailureException(
+                    String.format("Failed to create the output directory: %s",
+                                  ex.getMessage()),
+                    ex);
+            }
+        }
+
         final String dirPath;
         if (outputDirectory.getAbsolutePath().endsWith("/")) {
             dirPath = outputDirectory.getAbsolutePath().substring(
@@ -370,12 +416,70 @@ public class GenerateDdlMojo extends AbstractMojo {
             dirPath = outputDirectory.getAbsolutePath();
         }
 
-        export.setOutputFile(String.format("%s/%s.sql",
-                                           dirPath,
-                                           dialect.name().toLowerCase(
-                                               Locale.ENGLISH)));
-        export.setFormat(true);
-        export.execute(true, false, false, true);
+        final Path outputFilePath = Paths.get(String.format(
+            "%s/%s.sql", dirPath, dialect.name().toLowerCase(Locale.ENGLISH)));
+        final Path tmpFilePath = Paths.get(String.format(
+            "%s/%s.sql",
+            tmpDir.toString(),
+            dialect.name().toLowerCase(
+                Locale.ENGLISH)));
+
+        if (Files.exists(outputFilePath)) {
+
+            final String outputFileData;
+            final String tmpFileData;
+            try {
+                outputFileData = new String(
+                    Files.readAllBytes(outputFilePath));
+                tmpFileData = new String(
+                    Files.readAllBytes(tmpFilePath));
+            } catch (IOException ex) {
+                throw new MojoFailureException(
+                    String.format("Failed to check if DDL file content has "
+                                      + "changed: %s",
+                                  ex.getMessage()),
+                    ex);
+            }
+
+            try {
+                if (!tmpFileData.equals(outputFileData)) {
+                    Files.deleteIfExists(outputFilePath);
+                    Files.copy(tmpFilePath, outputFilePath);
+                }
+            } catch (IOException ex) {
+                throw new MojoFailureException(
+                    String.format("Failed to copy DDL file content from tmp "
+                                      + "file to output file: %s",
+                                  ex.getMessage()),
+                    ex);
+            }
+        } else {
+            try {
+                Files.copy(tmpFilePath, outputFilePath);
+            } catch (IOException ex) {
+                throw new MojoFailureException(
+                    String.format("Failed to copy tmp file to output file: %s",
+                                  ex.getMessage()),
+                    ex);
+            }
+        }
+
+//        final File outputFile = outputFilePath.toFile();
+//        final File tmpFile = Paths.get(String.format(
+//            "%s/%s.sql",
+//            tmpDir.toString(),
+//            dialect.name().toLowerCase(
+//                Locale.ENGLISH))).toFile();
+        //Check if the output directory exists.
+        //        export.setOutputFile(String.format("%s/%s.sql",
+        //                                           dirPath,
+        //                                           dialect.name().toLowerCase(
+        //                                               Locale.ENGLISH)));
+        //        export.setFormat(true);
+        //        export.execute(true, false, false, true);
+        {
+
+        }
     }
 
     private void processPersistenceXml(final Configuration configuration) {
