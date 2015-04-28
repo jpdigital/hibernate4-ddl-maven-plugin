@@ -55,8 +55,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * Goal which creates DDL SQL files for the JPA entities in the project (using the Hibernate 4
- * SchemaExport class}.
+ * Goal which creates DDL SQL files for the JPA entities in the project (using
+ * the Hibernate 4 SchemaExport class}.
  */
 @Mojo(name = "gen-ddl",
       defaultPhase = LifecyclePhase.PROCESS_CLASSES,
@@ -67,38 +67,45 @@ public class GenerateDdlMojo extends AbstractMojo {
     /**
      * Location of the output file.
      */
-    @Parameter(defaultValue = "src/main/resources/sql/ddl/", property = "outputDir", required = true)
+    @Parameter(defaultValue = "src/main/sql/ddl/",
+               property = "outputDir",
+               required = true)
     private File outputDirectory;
 
     /**
-     * Packages containing the entity files for which the SQL DDL scripts shall be generated.
+     * Packages containing the entity files for which the SQL DDL scripts shall
+     * be generated.
      */
     @Parameter(required = true)
     private String[] packages;
 
     /**
-     * Database dialects for which create scripts shall be generated. For available dialects refer
-     * to the documentation the {@link Dialect} enumeration.
+     * Database dialects for which create scripts shall be generated. For
+     * available dialects refer to the documentation the {@link Dialect}
+     * enumeration.
      */
     @Parameter(required = true)
     private String[] dialects;
 
     /**
-     * Set this to <code>true</code> if you use the Envers feature of Hibernate. When set to
-     * <code>true</code> the {@code SchemaExport} implementation for Envers is used. This is
-     * necessary to create the additional tables required by Envers. Default value is {@code false}.
+     * Set this to <code>true</code> if you use the Envers feature of Hibernate.
+     * When set to <code>true</code> the {@code SchemaExport} implementation for
+     * Envers is used. This is necessary to create the additional tables
+     * required by Envers. Default value is {@code false}.
      */
     @Parameter(required = false)
     private boolean useEnvers;
 
     /**
-     * The {@code persistence.xml} file to use to read properties etc. Default value is
-     * {@code src/main/resources/META-INF/persistence.xml}. If the file is not present it is
-     * ignored. If the file is present all properties set using a {@code <property>} element are set
-     * on the Hibernate configuration.
+     * The {@code persistence.xml} file to use to read properties etc. Default
+     * value is {@code src/main/resources/META-INF/persistence.xml}. If the file
+     * is not present it is ignored. If the file is present all properties set
+     * using a {@code <property>} element are set on the Hibernate
+     * configuration.
      */
-    @Parameter(defaultValue = "${basedir}/src/main/resources/META-INF/persistence.xml",
-               required = false)
+    @Parameter(
+        defaultValue = "${basedir}/src/main/resources/META-INF/persistence.xml",
+        required = false)
     private File persistenceXml;
 
     @Component
@@ -186,20 +193,24 @@ public class GenerateDdlMojo extends AbstractMojo {
     }
 
     /**
-     * Helper method for converting the dialects from {@code String} to instances of the
-     * {@link Dialect} enumeration.
+     * Helper method for converting the dialects from {@code String} to
+     * instances of the {@link Dialect} enumeration.
      *
      * @param dialect      The dialect to convert.
-     * @param dialectsList The lists of dialects where the converted dialect is stored.
+     * @param dialectsList The lists of dialects where the converted dialect is
+     *                     stored.
      *
-     * @throws MojoFailureException If the dialect string could not be converted, for example if it
-     *                              is misspelled. This will cause a {@code Build Failure}
+     * @throws MojoFailureException If the dialect string could not be
+     *                              converted, for example if it is misspelled.
+     *                              This will cause a {@code Build Failure}
      */
-    private void convertDialect(final String dialect, final Set<Dialect> dialectsList)
+    private void convertDialect(final String dialect,
+                                final Set<Dialect> dialectsList)
         throws MojoFailureException {
 
         try {
-            dialectsList.add(Dialect.valueOf(dialect.toUpperCase(Locale.ENGLISH)));
+            dialectsList.add(Dialect
+                .valueOf(dialect.toUpperCase(Locale.ENGLISH)));
         } catch (IllegalArgumentException ex) {
             final StringBuffer buffer = new StringBuffer();
             for (final Dialect avilable : Dialect.values()) {
@@ -207,19 +218,20 @@ public class GenerateDdlMojo extends AbstractMojo {
             }
 
             throw new MojoFailureException(
-                String.format("Can't convert the configured dialect '%s' to a dialect classname. "
-                                  + "Available dialects are:%n"
-                                  + "%s",
-                              dialect,
-                              buffer.toString()),
+                String.format(
+                    "Can't convert the configured dialect '%s' to a dialect classname. "
+                    + "Available dialects are:%n"
+                        + "%s",
+                    dialect,
+                    buffer.toString()),
                 ex);
         }
     }
 
     /**
-     * Helper method for finding a entity classes in a package. The entity classes must be annotated
-     * with the {@link Entity} annotation. The method uses the Reflections library for finding the
-     * entity classes.
+     * Helper method for finding a entity classes in a package. The entity
+     * classes must be annotated with the {@link Entity} annotation. The method
+     * uses the Reflections library for finding the entity classes.
      *
      * @param packageName
      * @param entityClasses
@@ -229,15 +241,16 @@ public class GenerateDdlMojo extends AbstractMojo {
         throws MojoFailureException {
 
         final Reflections reflections = createReflections(packageName);
-        final Set<Class<?>> classesWithEntity = reflections.getTypesAnnotatedWith(Entity.class);
+        final Set<Class<?>> classesWithEntity = reflections
+            .getTypesAnnotatedWith(Entity.class);
         for (final Class<?> entityClass : classesWithEntity) {
             entityClasses.add(entityClass);
         }
     }
 
     /**
-     * Helper method for creating the {@link Reflections} instance used by the other methods for a
-     * specific package. Also does some class loader magic.
+     * Helper method for creating the {@link Reflections} instance used by the
+     * other methods for a specific package. Also does some class loader magic.
      *
      * @param packageName Fully qualified name of the package.
      *
@@ -245,7 +258,8 @@ public class GenerateDdlMojo extends AbstractMojo {
      *
      * @throws MojoFailureException If something goes wrong.
      */
-    private Reflections createReflections(final String packageName) throws MojoFailureException {
+    private Reflections createReflections(final String packageName) throws
+        MojoFailureException {
         if (project == null) {
             return new Reflections(ClasspathHelper.forPackage(packageName));
         } else {
@@ -253,11 +267,13 @@ public class GenerateDdlMojo extends AbstractMojo {
             try {
                 classPathElems = project.getCompileClasspathElements();
             } catch (DependencyResolutionRequiredException ex) {
-                throw new MojoFailureException("Failed to resolve project classpath.", ex);
+                throw new MojoFailureException(
+                    "Failed to resolve project classpath.", ex);
             }
             final List<URL> classPathUrls = new ArrayList<>();
             for (final String classPathElem : classPathElems) {
-                getLog().info(String.format("Adding classpath elemement '%s'...", classPathElem));
+                getLog().info(String
+                    .format("Adding classpath elemement '%s'...", classPathElem));
                 classPathUrls.add(classPathElemToUrl(classPathElem));
             }
 
@@ -274,13 +290,14 @@ public class GenerateDdlMojo extends AbstractMojo {
                 Thread.currentThread().getContextClassLoader());
             Thread.currentThread().setContextClassLoader(classLoader);
 
-            return new Reflections(ClasspathHelper.forPackage(packageName, classLoader));
+            return new Reflections(ClasspathHelper.forPackage(packageName,
+                                                              classLoader));
         }
     }
 
     /**
-     * Helper method for converting a fully qualified package name from the string representation to
-     * a a URL.
+     * Helper method for converting a fully qualified package name from the
+     * string representation to a a URL.
      *
      * @param classPathElem The class path to convert.
      *
@@ -288,15 +305,17 @@ public class GenerateDdlMojo extends AbstractMojo {
      *
      * @throws MojoFailureException If something goes wrong.
      */
-    private URL classPathElemToUrl(final String classPathElem) throws MojoFailureException {
+    private URL classPathElemToUrl(final String classPathElem) throws
+        MojoFailureException {
         final File file = new File(classPathElem);
         final URL url;
         try {
             url = file.toURI().toURL();
         } catch (MalformedURLException ex) {
             throw new MojoFailureException(
-                String.format("Failed to convert classpath element '%s' to an URL.",
-                              classPathElem),
+                String.format(
+                    "Failed to convert classpath element '%s' to an URL.",
+                    classPathElem),
                 ex);
         }
 
@@ -304,20 +323,23 @@ public class GenerateDdlMojo extends AbstractMojo {
     }
 
     /**
-     * Helper method for generating the DDL classes for a specific dialect. This is place for the
-     * real work is done. The method first creates an instance of the {@link Configuration} class
-     * from Hibernate an puts the appropriate values into it. It then creates an instance of the
-     * {@link SchemaExport} class from the Hibernate API, configured this class, for example by
-     * setting {@code format} to {@code true} so that the generated SQL files are formatted nicely.
-     * After that it calls the {@link SchemaExport#execute(boolean, boolean, boolean, boolean)}
-     * method which will create the SQL script file. The method is called in a way which requires no
-     * database connection.
+     * Helper method for generating the DDL classes for a specific dialect. This
+     * is place for the real work is done. The method first creates an instance
+     * of the {@link Configuration} class from Hibernate an puts the appropriate
+     * values into it. It then creates an instance of the {@link SchemaExport}
+     * class from the Hibernate API, configured this class, for example by
+     * setting {@code format} to {@code true} so that the generated SQL files
+     * are formatted nicely. After that it calls the
+     * {@link SchemaExport#execute(boolean, boolean, boolean, boolean)} method
+     * which will create the SQL script file. The method is called in a way
+     * which requires no database connection.
      *
      *
      * @param dialect
      * @param entityClasses
      */
-    private void generateDdl(final Dialect dialect, final Set<Class<?>> entityClasses) {
+    private void generateDdl(final Dialect dialect,
+                             final Set<Class<?>> entityClasses) {
         final Configuration configuration = new Configuration();
 
         processPersistenceXml(configuration);
@@ -328,7 +350,8 @@ public class GenerateDdlMojo extends AbstractMojo {
             configuration.addAnnotatedClass(entityClass);
         }
 
-        configuration.setProperty("hibernate.dialect", dialect.getDialectClass());
+        configuration
+            .setProperty("hibernate.dialect", dialect.getDialectClass());
 
         final SchemaExport export;
         if (useEnvers) {
@@ -349,14 +372,16 @@ public class GenerateDdlMojo extends AbstractMojo {
 
         export.setOutputFile(String.format("%s/%s.sql",
                                            dirPath,
-                                           dialect.name().toLowerCase(Locale.ENGLISH)));
+                                           dialect.name().toLowerCase(
+                                               Locale.ENGLISH)));
         export.setFormat(true);
         export.execute(true, false, false, true);
     }
 
     private void processPersistenceXml(final Configuration configuration) {
         if (persistenceXml != null) {
-            getLog().info("persistence.xml available, locking for properties...");
+            getLog()
+                .info("persistence.xml available, locking for properties...");
 
             try (InputStream inStream = new FileInputStream(persistenceXml)) {
                 final SAXParser parser;
@@ -365,9 +390,13 @@ public class GenerateDdlMojo extends AbstractMojo {
 
                 parser.parse(inStream, new PersistenceXmlHandler(configuration));
             } catch (IOException ex) {
-                getLog().error("Failed to open persistence.xml. Not processing properties.", ex);
+                getLog().error(
+                    "Failed to open persistence.xml. Not processing properties.",
+                    ex);
             } catch (ParserConfigurationException | SAXException ex) {
-                getLog().error("Error parsing persistence.xml. Not processing properties", ex);
+                getLog().error(
+                    "Error parsing persistence.xml. Not processing properties",
+                    ex);
             }
         }
     }
@@ -397,9 +426,10 @@ public class GenerateDdlMojo extends AbstractMojo {
 
                 if (propertyName != null && !propertyName.isEmpty()
                         && propertyValue != null && !propertyValue.isEmpty()) {
-                    getLog().info(String.format("Found property %s = %s in persistence.xml",
-                                                propertyName,
-                                                propertyValue));
+                    getLog().info(String.format(
+                        "Found property %s = %s in persistence.xml",
+                        propertyName,
+                        propertyValue));
                     configuration.setProperty(propertyName, propertyValue);
                 }
             }
