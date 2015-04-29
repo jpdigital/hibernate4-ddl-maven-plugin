@@ -9,11 +9,11 @@
 
     <name>Maven DDL generator plugin for Hibernate 4</name>
 
-    <url>http://www.jp-digital.de/projects/hibernate4-ddl-maven-plugin</url>
+    <url>https://github.com/jpdigital/hibernate4-ddl-maven-plugin</url>
     
     <issueManagement>
-        <system>Redmine</system>
-        <url>http://www.jp-digital.de/projects/hibernate4-ddl-maven-plugin</url>
+        <system>GitHub</system>
+        <url>https://github.com/jpdigital/hibernate4-ddl-maven-plugin/issues</url>
     </issueManagement>
     
     <distributionManagement>
