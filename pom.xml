@@ -4,7 +4,7 @@
 
     <groupId>de.jpdigital</groupId>
     <artifactId>hibernate4-ddl-maven-plugin</artifactId>
-    <version>1.0.0-alpha.1</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven DDL generator plugin for Hibernate 4</name>
@@ -28,7 +28,7 @@
             </snapshots>
         </snapshotRepository>
         <repository>
-            <id>jp-digital-releases</id>            
+            <id>jp-digital-releases</id>
             <url>http://archiva.jp-digital.de/repository/jp-digital-releases/</url>
             <releases>
                 <enabled>true</enabled>
