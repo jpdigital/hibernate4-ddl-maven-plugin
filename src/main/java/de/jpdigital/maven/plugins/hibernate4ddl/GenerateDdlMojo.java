@@ -67,7 +67,7 @@ public class GenerateDdlMojo extends AbstractMojo {
     /**
      * Location of the output file.
      */
-    @Parameter(defaultValue = "src/main/sql/ddl/",
+    @Parameter(defaultValue = "${project.build.directory}/generated-resources/sql/ddl/auto",
                property = "outputDir",
                required = true)
     private File outputDirectory;

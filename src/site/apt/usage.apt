@@ -7,49 +7,177 @@
 
 Usage
 
+* General usage
+
+** Include plugin into Maven
+
     To use the plugin add it the the build pluings in your POM:
 
-+--
-<build>
-...
-    <plugin>
-        <groupId>de.jpdigital</groupId>
-        <artifactId>hibernate4-ddl-maven-plugin</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <configuration>
-            <dialects>
-                <param>postgresql9</param>
-            </dialects>
-            <packages>
-                <param>org.example.entities</param>
-            </packages>
-        </configuration>
-        <executions>
-            <execution>
-                <goals>
-                    <goal>gen-ddl</goal>
-                </goals>
-                <phase>process-classes</phase>
-            </execution>
-        </executions>
-    </plugin>
-...
-</build>
-+--
++------------------------------------------------------------------------------+
+<project>
+    [...]
+    <build>
+        [...]
+        <plugin>
+            <groupId>de.jpdigital</groupId>
+            <artifactId>hibernate4-ddl-maven-plugin</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <configuration>
+                <dialects>
+                    <param>postgresql9</param>
+                </dialects>
+                <packages>
+                    <param>org.example.entities</param>
+                </packages>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>gen-ddl</goal>
+                    </goals>
+                    <phase>process-classes</phase>
+                </execution>
+            </executions>
+        </plugin>
+        [...]
+    </build>
+    [...]
+</project>
++------------------------------------------------------------------------------+
 
-    The plugin has two mandatory configuration parameters. The first on are the dialects for which
-    DDL scripts will be generated. For a list of supported dialects refer to the JavaDoc of the 
+* Configuration parameters
+
+    The plugin has two mandatory configuration parameters. The first on are the 
+    dialects for which DDL scripts will be generated. For a list of supported 
+    dialects refer to the JavaDoc of the 
     {{{Dialect}apidocs/index.html?de/jpdigital/maven/plugins/hibernate4ddl/Dialect.html}} 
     enumeration.
 
     The second parameter are the packages which contain the entity classes.
 
-    If you use Envers in your project you have to add a third parameter to create the additional 
-    tables required by Envers:
+    If you use Envers in your project you have to add a third parameter to 
+    create the additional tables required by Envers:
 
-+--
-<useEnvers>true</useEnvers>
-+--
++------------------------------------------------------------------------------+
+<project>
+    [...]
+    <build>
+        [...]
+        <plugin>
+            <groupId>de.jpdigital</groupId>
+            <artifactId>hibernate4-ddl-maven-plugin</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <configuration>
+                <dialects>
+                    <param>postgresql9</param>
+                </dialects>
+                <useEnvers>true</useEnvers>
+                <packages>
+                    <param>org.example.entities</param>
+                </packages>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>gen-ddl</goal>
+                    </goals>
+                    <phase>process-classes</phase>
+                </execution>
+            </executions>
+        </plugin>
+        [...]
+    </build>
+    [...]
+</project>
++------------------------------------------------------------------------------+
+
+* Maven repository
 
     For now you have also the add the author's repository to your Maven repositories, either in
     your settings file or the the POM of your project:
+
++------------------------------------------------------------------------------+
+<project>
+    [...]
+    <repositories>
+        <repository>
+            <id>jp-digital-snapshots</id>
+            <url>http://archiva.jp-digital.de/repository/jp-digital-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>jp-digital-releases</id>
+            <url>http://archiva.jp-digital.de/repository/jp-digital-releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    <repositories>
+    [...]
+</project>
++------------------------------------------------------------------------------+
+
+* Include generated SQL scripts into project archive
+
+    The default output directory for the SQL DDL scripts is 
+    <<<${project.build.directory}/generated-resources/sql/ddl/auto>>>. 
+    <<<${project-build.directory} is usually the <<<target>>> directory of your
+    project. To include the SQL scripts into the project archive you must add the
+    directory in the <<<resources>>> element inside the your build configuration, 
+    for example like this:
+
++------------------------------------------------------------------------------+
+<project>
+    [...]
+    <build>
+        [...]
+        <resources>
+            <resource>
+                <directory>${project.build.directory}/generated-resources</directory>
+            </resource>
+        </resources>
+        [...]
+    </build>
+    [...]
+</project>
++------------------------------------------------------------------------------+
+
+* Using generated SQL scripts in the tests
+
+    If you want to use the generated SQL DDL scripts in your tests you must also
+    add the <<<generated-resources>>> directory to the test classpath:
+
++------------------------------------------------------------------------------+
+<project>
+    [...]
+    <build>
+        [...]
+        <plugins>
+            [...]
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                    [...]
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${project.build.directory}/generated-resources</additionalClasspathElement>
+                    </additionalClasspathElements>
+                    [...]
+                 </configuration>
+            </plugin>
+            [...]
+        </plugins>
+        [...]
+    </build>
+    [...]
+</project>
++------------------------------------------------------------------------------+
