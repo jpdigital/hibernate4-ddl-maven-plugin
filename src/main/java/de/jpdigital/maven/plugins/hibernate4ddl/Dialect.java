@@ -23,7 +23,7 @@ package de.jpdigital.maven.plugins.hibernate4ddl;
  * <a href="http://docs.jboss.org/hibernate/orm/4.3/manual/en-US/html_single/#configuration-optional-dialects">
  * Hibernate documentation</a>.
  * Also this enumeration provides the convenient method
- * {@link #getDialectClass()} for getting the classname of the Hibernate
+ * {@link #getDialectClass()} for getting the class name of the Hibernate
  * dialect.
  *
  * @author <a href="mailto:jens.pelzetter@googlemail.com">Jens Pelzetter</a>
