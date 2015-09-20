@@ -26,7 +26,7 @@ to add my Maven repository to your POM or your settings:
 The code is available at [GitHub](http://github.com/jpdigital/hibernate4-ddl-maven-plugin) at 
 <http://github.com/jpdigital/hibernate4-ddl-maven-plugin>. The 
 [projects web site](http://jpdigital.github.com/hibernate4-maven-plugin) is also available on GitHub 
-at <http://jpdigital.github.com/hibernate4-maven-plugin>.
+at <http://jpdigital.github.io/hibernate4-ddl-maven-plugin>.
 
 
 
