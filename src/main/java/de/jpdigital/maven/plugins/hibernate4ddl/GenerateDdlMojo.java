@@ -67,7 +67,8 @@ public class GenerateDdlMojo extends AbstractMojo {
     /**
      * Location of the output file.
      */
-    @Parameter(defaultValue = "${project.build.directory}/generated-resources/sql/ddl/auto",
+    @Parameter(defaultValue
+                   = "${project.build.directory}/generated-resources/sql/ddl/auto",
                property = "outputDir",
                required = true)
     private File outputDirectory;
@@ -95,6 +96,13 @@ public class GenerateDdlMojo extends AbstractMojo {
      */
     @Parameter(required = false)
     private boolean useEnvers;
+
+    /**
+     * Set this to {@code true} to include drop statements into the generated
+     * DDL file.
+     */
+    @Parameter(required = false)
+    private boolean createDropStatments;
 
     /**
      * The {@code persistence.xml} file to use to read properties etc. Default
@@ -190,6 +198,14 @@ public class GenerateDdlMojo extends AbstractMojo {
         this.useEnvers = useEnvers;
     }
 
+    public boolean isCreateDropStatments() {
+        return createDropStatments;
+    }
+
+    public void setCreateDropStatements(final boolean createDropStatments) {
+        this.createDropStatments = createDropStatments;
+    }
+
     public File getPersistenceXml() {
         return persistenceXml;
     }
@@ -260,7 +276,11 @@ public class GenerateDdlMojo extends AbstractMojo {
 
         processPersistenceXml(configuration);
 
-        configuration.setProperty("hibernate.hbm2ddl.auto", "create");
+        if (createDropStatments) {
+            configuration.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+        } else {
+            configuration.setProperty("hibernate.hbm2ddl.auto", "create");
+        }
 
         for (final Class<?> entityClass : entityClasses) {
             configuration.addAnnotatedClass(entityClass);
@@ -274,7 +294,6 @@ public class GenerateDdlMojo extends AbstractMojo {
             export = new EnversSchemaGenerator(configuration).export();
         } else {
             export = new SchemaExport(configuration);
-
         }
         export.setDelimiter(";");
 
@@ -291,7 +310,11 @@ public class GenerateDdlMojo extends AbstractMojo {
             dialect.name().toLowerCase(
                 Locale.ENGLISH)));
         export.setFormat(true);
-        export.execute(true, false, false, true);
+        if (createDropStatments) {
+            export.execute(true, false, false, false);
+        } else {
+            export.execute(true, false, false, true);
+        }
 
         writeOutputFile(dialect, tmpDir);
     }
@@ -486,4 +509,5 @@ public class GenerateDdlMojo extends AbstractMojo {
         return Paths.get(String.format(
             "%s/%s.sql", dirPath, dialect.name().toLowerCase(Locale.ENGLISH)));
     }
+
 }

@@ -173,6 +173,105 @@ public class DdlMojoTest {
                     + "reports entity",
                 dialect.toLowerCase(Locale.ENGLISH)),
                        fileContainsReportEntity(path));
+
+            //Drop statements have not been enabled and should be generated.
+            assertFalse(String.format(
+                "DDL file '%s' contains 'drop table' statement for table "
+                    + "persons but should not.",
+                dialect.toLowerCase()),
+                        fileContainsDropPersonTable(path));
+
+            assertFalse(String.format(
+                "DDL file '%s' contains 'drop table' statement for table "
+                    + "companies but should not.",
+                dialect.toLowerCase()),
+                        fileContainsDropCompaniesTable(path));
+
+            assertFalse(String.format(
+                "DDL file '%s' contains 'drop table' statement for table "
+                    + "reports but should not.",
+                dialect.toLowerCase()),
+                        fileContainsDropReportsTable(path));
+        }
+    }
+
+    /**
+     * Check if the DDL files are generated and have the expected content,
+     * including drop statements.
+     *
+     * @throws MojoExecutionException if something wants wrong when executing
+     *                                the Mojo.
+     * @throws MojoFailureException   if something wants wrong when executing
+     *                                the Mojo.
+     * @throws IOException            if the test directory can't be opened or
+     *                                created.
+     */
+    @Test
+    public void generateDdlWithDrop() throws MojoExecutionException,
+                                             MojoFailureException,
+                                             IOException {
+        mojo.setOutputDirectory(new File(TEST_DIR));
+
+        final String[] packages = new String[]{
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
+        };
+        mojo.setPackages(packages);
+
+        final String[] dialects = new String[]{
+            "hsql",
+            "mysql5",
+            "POSTGRESQL9"
+        };
+        mojo.setDialects(dialects);
+
+        mojo.setCreateDropStatements(true);
+
+        mojo.execute();
+
+        for (String dialect : dialects) {
+            final String path = String.format("%s/%s.sql",
+                                              TEST_DIR,
+                                              dialect.toLowerCase(
+                                                  Locale.ENGLISH));
+            assertTrue(String.format("DDL file '%s' was not generated.", path),
+                       fileExists(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'create table' statement for "
+                    + "persons entity",
+                dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsPersonEntity(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'create table' statement for "
+                    + "company entity",
+                dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsCompanyEntity(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contains 'create table' statement for "
+                    + "reports entity",
+                dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsReportEntity(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'drop table' statement for table "
+                + "persons.",
+                dialect.toLowerCase()),
+                       fileContainsDropPersonTable(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain'drop table' statement for table "
+                + "companies.",
+                dialect.toLowerCase()),
+                       fileContainsDropCompaniesTable(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'drop table' statement for table "
+                + "reports.",
+                dialect.toLowerCase()),
+                       fileContainsDropReportsTable(path));
         }
     }
 
@@ -240,6 +339,101 @@ public class DdlMojoTest {
                     + "reports envers table",
                 dialect.toLowerCase(Locale.ENGLISH)),
                        fileContainsReportsEnversTable(path));
+
+            //Drop statements have not been enabled and should be generated.
+            assertFalse(String.format(
+                "DDL file '%s' contains 'drop table' statement for table "
+                    + "persons but should not.",
+                dialect.toLowerCase()),
+                        fileContainsDropPersonTable(path));
+
+            assertFalse(String.format(
+                "DDL file '%s' contains 'drop table' statement for table "
+                    + "companies but should not.",
+                dialect.toLowerCase()),
+                        fileContainsDropCompaniesTable(path));
+
+            assertFalse(String.format(
+                "DDL file '%s' contains 'drop table' statement for table "
+                    + "reports but should not.",
+                dialect.toLowerCase()),
+                        fileContainsDropReportsTable(path));
+        }
+    }
+
+    @Test
+    public void generateDdl4EnversWithDrop() throws MojoExecutionException,
+                                                    MojoFailureException,
+                                                    IOException {
+        mojo.setOutputDirectory(new File(TEST_DIR));
+
+        final String[] packages = new String[]{
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities",
+            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
+        };
+        mojo.setPackages(packages);
+
+        final String[] dialects = new String[]{
+            "hsql",
+            "mysql5",
+            "POSTGRESQL9"
+        };
+        mojo.setDialects(dialects);
+
+        mojo.setUseEnvers(true);
+
+        mojo.setCreateDropStatements(true);
+
+        mojo.execute();
+
+        for (final String dialect : dialects) {
+            final String path = String.format("%s/%s.sql",
+                                              TEST_DIR,
+                                              dialect
+                                              .toLowerCase(Locale.ENGLISH));
+
+            assertTrue(String.format("DDL file '%s' was not generated.", path),
+                       fileExists(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'create table' statement for"
+                    + "persons entity",
+                dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsPersonEntity(path));
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'create table' statement for"
+                    + "persons entity",
+                dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsCompanyEntity(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contains 'create table' statement for "
+                    + "reports entity",
+                dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsReportEntity(path));
+            assertTrue(String.format(
+                "DDL file '%s' does not contains 'create table' statement for "
+                    + "reports envers table",
+                dialect.toLowerCase(Locale.ENGLISH)),
+                       fileContainsReportsEnversTable(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'drop table' statement for table "
+                + "persons.",
+                dialect.toLowerCase()),
+                       fileContainsDropPersonTable(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain'drop table' statement for table "
+                + "companies.",
+                dialect.toLowerCase()),
+                       fileContainsDropCompaniesTable(path));
+
+            assertTrue(String.format(
+                "DDL file '%s' does not contain 'drop table' statement for table "
+                + "reports.",
+                dialect.toLowerCase()),
+                       fileContainsDropReportsTable(path));
         }
     }
 
@@ -276,7 +470,8 @@ public class DdlMojoTest {
 
         final Configuration configuration = new Configuration();
         final Method processMethod = mojo.getClass().getDeclaredMethod(
-            "processPersistenceXml", Configuration.class);
+            "processPersistenceXml", Configuration.class
+        );
         processMethod.setAccessible(true);
 
         processMethod.invoke(mojo, configuration);
@@ -298,7 +493,8 @@ public class DdlMojoTest {
      * @throws MojoFailureException   if the execution of the Mojo fails
      *                                (expected here)
      */
-    @Test(expected = MojoFailureException.class)
+    @Test(expected
+              = MojoFailureException.class)
     public void illegalDialect() throws MojoExecutionException,
                                         MojoFailureException {
         mojo.setOutputDirectory(new File(TEST_DIR));
@@ -412,12 +608,26 @@ public class DdlMojoTest {
         return file.exists();
     }
 
-    private boolean fileContainsPersonEntity(final String path) throws
-        IOException {
+    private boolean fileContainsPersonEntity(final String path)
+        throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(path));
         final String sql = new String(encoded, StandardCharsets.UTF_8);
 
         return sql.toLowerCase(Locale.ENGLISH).contains("create table persons");
+    }
+
+    private boolean fileContainsDropPersonTable(final String path)
+        throws IOException {
+
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        final String sql = new String(encoded, StandardCharsets.UTF_8);
+
+        return sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table if exists persons")
+                   || sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table persons if exists")
+                   || sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table persons");
     }
 
     private boolean fileContainsReportEntity(final String path) throws
@@ -428,8 +638,22 @@ public class DdlMojoTest {
         return sql.toLowerCase(Locale.ENGLISH).contains("create table reports");
     }
 
-    private boolean fileContainsReportsEnversTable(final String path) throws
-        IOException {
+    private boolean fileContainsDropReportsTable(final String path)
+        throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        final String sql = new String(encoded, StandardCharsets.UTF_8);
+
+        return sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table if exists reports")
+                   || sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table reports if exists")
+                   || sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table reports");
+
+    }
+
+    private boolean fileContainsReportsEnversTable(final String path)
+        throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(path));
         final String sql = new String(encoded, StandardCharsets.UTF_8);
 
@@ -437,13 +661,26 @@ public class DdlMojoTest {
             "create table reports_revisions");
     }
 
-    private boolean fileContainsCompanyEntity(final String path) throws
-        IOException {
+    private boolean fileContainsCompanyEntity(final String path)
+        throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(path));
         final String sql = new String(encoded, StandardCharsets.UTF_8);
 
         return sql.toLowerCase(Locale.ENGLISH)
             .contains("create table companies");
+    }
+
+    private boolean fileContainsDropCompaniesTable(final String path)
+        throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        final String sql = new String(encoded, StandardCharsets.UTF_8);
+
+        return sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table if exists companies")
+                   || sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table companies if exists")
+                   || sql.toLowerCase(Locale.ENGLISH).contains(
+            "drop table companies");
     }
 
     /**
@@ -536,7 +773,7 @@ public class DdlMojoTest {
         mojo.setDialects(dialects);
 
         mojo.setUseEnvers(false);
-        
+
         mojo.execute();
 
         final Map<String, Long> timestamps = new HashMap<>();
@@ -555,7 +792,6 @@ public class DdlMojoTest {
 //            "de.jpdigital.maven.plugins.hibernate4ddl.tests.entities2"
 //        };
 //        mojo.setPackages(packages2);
-        
         mojo.setUseEnvers(true);
 
         Thread.sleep(2500);
