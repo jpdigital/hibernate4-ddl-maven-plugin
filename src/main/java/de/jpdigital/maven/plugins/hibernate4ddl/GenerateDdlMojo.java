@@ -40,6 +40,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.hibernate.HibernateException;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.envers.tools.hbm2ddl.EnversSchemaGenerator;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
@@ -51,6 +52,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Goal which creates DDL SQL files for the JPA entities in the project (using
@@ -272,7 +277,35 @@ public class GenerateDdlMojo extends AbstractMojo {
     private void generateDdl(final Dialect dialect,
                              final Set<Class<?>> entityClasses)
         throws MojoFailureException {
-        final Configuration configuration = new Configuration();
+        final Configuration configuration = new Configuration() {
+            private static final long serialVersionUID = 8818333354983681885L;
+
+            @Override
+            public String[] generateSchemaCreationScript(
+                final org.hibernate.dialect.Dialect dialect) 
+                throws HibernateException {
+                final List<String> statements = new ArrayList<>();
+                statements.addAll(Arrays.asList(super.generateSchemaCreationScript(dialect)));
+                
+                final List<String> beforeTablesStatements = new ArrayList<>();
+                final Iterator<String> iterator = statements.iterator();
+                while(iterator.hasNext()) {
+                    final String statement = iterator.next().toLowerCase();
+                    if (statement.startsWith("create schema") ||
+                        statement.startsWith("create domain")) {
+                        beforeTablesStatements.add(statement);
+                        iterator.remove();
+                    }
+                }
+                
+                for (String beforeTablesStatement : beforeTablesStatements) {
+                    statements.add(0, beforeTablesStatement);
+                }
+                
+                return statements.toArray(new String[statements.size()]);
+            }
+
+        };
 
         processPersistenceXml(configuration);
 

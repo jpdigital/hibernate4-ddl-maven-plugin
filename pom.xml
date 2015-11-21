@@ -5,7 +5,7 @@
     <groupId>de.jpdigital</groupId>
     <artifactId>hibernate4-ddl-maven-plugin</artifactId>
     <!--<version>1.0.0-SNAPSHOT</version>-->
-    <version>1.0.0-beta.1</version>
+    <version>1.0.0-beta.2</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven DDL generator plugin for Hibernate 4</name>
@@ -24,26 +24,6 @@
     </scm>
     
     <distributionManagement>
-        <!--<snapshotRepository>
-            <id>jp-digital-snapshots</id>
-            <url>http://archiva.jp-digital.de/repository/jp-digital-snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </snapshotRepository>
-        <repository>
-            <id>jp-digital-releases</id>
-            <url>http://archiva.jp-digital.de/repository/jp-digital-releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>-->
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonetype.org/content/repositories/snapshots</url>
@@ -118,6 +98,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.maven.plugin-testing</groupId>
+            <artifactId>maven-plugin-testing-harness</artifactId>
+            <version>3.3.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-project</artifactId>
             <version>3.0-alpha-2</version>
@@ -127,25 +113,27 @@
             <artifactId>plexus-utils</artifactId>
             <version>3.0.22</version>
         </dependency>
+        
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
             <version>1.3</version>
             <scope>test</scope>
         </dependency>
-        
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <version>1.3</version>
             <scope>test</scope>
         </dependency>
+        
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
