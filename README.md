@@ -2,26 +2,13 @@ hibernate4-ddl-maven-plugin
 ===========================
 
 The hibernate4-ddl-maven-plugin is a simple Maven plugin for creating SQL DDL
-files for JPA entities. The plugin uses Hibernates API for SchemaExport. To use the plugin, you have 
-to add my Maven repository to your POM or your settings:
+ifiles for JPA entities. The plugin uses Hibernates API for SchemaExport. 
 
-    ...
-    <pluginRepositories>
-    	...
-	<pluginRepository>
-	    <id>jp-digital.de</id>
-	    <name>jp-digital.de</name>
-	    <url>http://archiva.jp-digital.de</url>
-	    <releases>
-	    	<enabled>true</enabled>		
-	    </releases>
-	    <snapshots>
-	    	<enabled>false</enabled>
-	    </snapshots>
-	</pluginRepository>
-	...
-    </pluginRepositories>
-    ...
+The plugin is avaiable from Maven Central:
+
+groupId   : de.jpdigital
+artifactId: hibernate4-ddl-maven-plugin
+
 
 The code is available at [GitHub](http://github.com/jpdigital/hibernate4-ddl-maven-plugin) at 
 <http://github.com/jpdigital/hibernate4-ddl-maven-plugin>. The 
