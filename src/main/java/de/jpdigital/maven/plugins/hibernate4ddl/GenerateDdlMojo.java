@@ -55,7 +55,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Goal which creates DDL SQL files for the JPA entities in the project (using
@@ -277,6 +276,7 @@ public class GenerateDdlMojo extends AbstractMojo {
     private void generateDdl(final Dialect dialect,
                              final Set<Class<?>> entityClasses)
         throws MojoFailureException {
+
         final Configuration configuration = new Configuration() {
             private static final long serialVersionUID = 8818333354983681885L;
 
