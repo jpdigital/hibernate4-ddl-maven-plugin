@@ -66,6 +66,12 @@ import java.util.List;
       defaultPhase = LifecyclePhase.PROCESS_CLASSES,
       requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
       threadSafe = true)
+@SuppressWarnings({"PMD.GodClass",
+                   "PMD.CyclomaticComplexity",
+                   "PMD.ModifiedCyclomaticComplexity",
+                   "PMD.NPathComplexity",
+                   "PMD.StdCyclomaticComplexity",
+                   "PMD.LongVariable"})
 public class GenerateDdlMojo extends AbstractMojo {
 
     /**
@@ -278,30 +284,32 @@ public class GenerateDdlMojo extends AbstractMojo {
         throws MojoFailureException {
 
         final Configuration configuration = new Configuration() {
+
             private static final long serialVersionUID = 8818333354983681885L;
 
             @Override
             public String[] generateSchemaCreationScript(
-                final org.hibernate.dialect.Dialect dialect) 
+                final org.hibernate.dialect.Dialect dialect)
                 throws HibernateException {
                 final List<String> statements = new ArrayList<>();
-                statements.addAll(Arrays.asList(super.generateSchemaCreationScript(dialect)));
-                
+                statements.addAll(Arrays.asList(super
+                    .generateSchemaCreationScript(dialect)));
+
                 final List<String> beforeTablesStatements = new ArrayList<>();
                 final Iterator<String> iterator = statements.iterator();
-                while(iterator.hasNext()) {
+                while (iterator.hasNext()) {
                     final String statement = iterator.next().toLowerCase();
-                    if (statement.startsWith("create schema") ||
-                        statement.startsWith("create domain")) {
+                    if (statement.startsWith("create schema") || statement
+                        .startsWith("create domain")) {
                         beforeTablesStatements.add(statement);
                         iterator.remove();
                     }
                 }
-                
+
                 for (String beforeTablesStatement : beforeTablesStatements) {
                     statements.add(0, beforeTablesStatement);
                 }
-                
+
                 return statements.toArray(new String[statements.size()]);
             }
 
