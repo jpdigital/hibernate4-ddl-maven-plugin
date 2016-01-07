@@ -4,8 +4,7 @@
 
     <groupId>de.jpdigital</groupId>
     <artifactId>hibernate4-ddl-maven-plugin</artifactId>
-    <!--<version>1.0.0-SNAPSHOT</version>-->
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven DDL generator plugin for Hibernate 4</name>
@@ -226,8 +225,8 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
+            </plugin>-->
+            <!--<plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>1.6.6</version>
